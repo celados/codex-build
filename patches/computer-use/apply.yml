@@ -1,0 +1,26 @@
+id: codex-build-disable-computer-use-mcp
+language: Rust
+message: Skip the signing-bound Computer Use MCP server in custom builds.
+rule:
+  pattern: |-
+    for (name, plugin_server) in plugin_mcp_servers {
+        catalog.register(McpServerRegistration::from_plugin(
+            name,
+            attribution.clone(),
+            plugin_order,
+            plugin_server,
+        ));
+    }
+fix: |-
+  for (name, plugin_server) in plugin_mcp_servers {
+      // OpenAI's bundled Computer Use server rejects custom-signed distributions at startup.
+      if name == "computer-use" {
+          continue;
+      }
+      catalog.register(McpServerRegistration::from_plugin(
+          name,
+          attribution.clone(),
+          plugin_order,
+          plugin_server,
+      ));
+  }

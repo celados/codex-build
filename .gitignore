@@ -1,4 +1,5 @@
 /sources
 /dist
 /.ci-logs
+__pycache__/
 .DS_Store

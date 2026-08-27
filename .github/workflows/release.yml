@@ -1,0 +1,73 @@
+name: Build and release Codex
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: codex-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 180
+    env:
+      CARGO_BUILD_JOBS: 6
+      CARGO_INCREMENTAL: 1
+      HOMEBREW_NO_AUTO_UPDATE: 1
+      HOMEBREW_NO_INSTALL_CLEANUP: 1
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out builder
+        uses: actions/checkout@v7
+        with:
+          clean: false
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Prepare persistent runner
+        run: |
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          brew install ast-grep
+          rm -rf dist
+          if [[ -d sources/codex-rs/target ]]; then
+            target_kib="$(du -sk sources/codex-rs/target | awk '{print $1}')"
+            if ((target_kib > 41943040)); then
+              rm -rf sources/codex-rs/target
+            fi
+          fi
+
+      - name: Resolve release versions
+        id: release
+        run: python3 scripts/resolve-release.py
+
+      - name: Verify patch applicability
+        run: ./build.sh --check --upstream-ref "${{ steps.release.outputs.upstream_tag }}"
+
+      - name: Build and smoke-test
+        run: ./build.sh --upstream-ref "${{ steps.release.outputs.upstream_tag }}" --version "${{ steps.release.outputs.version }}"
+
+      - name: Write provenance
+        run: |
+          python3 scripts/write-provenance.py \
+            --output dist/provenance.json \
+            --version "${{ steps.release.outputs.version }}" \
+            --upstream-tag "${{ steps.release.outputs.upstream_tag }}" \
+            --upstream-commit "$(git -C sources rev-parse HEAD)" \
+            --builder-commit "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID"
+
+      - name: Publish release
+        run: |
+          gh release create "${{ steps.release.outputs.release_tag }}" \
+            dist/codex-aarch64-apple-darwin \
+            dist/codex-aarch64-apple-darwin.sha256 \
+            dist/provenance.json \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Codex ${{ steps.release.outputs.version }}" \
+            --notes "Custom macOS arm64 build of upstream ${{ steps.release.outputs.upstream_tag }}."

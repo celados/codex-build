@@ -1,0 +1,5 @@
+id: codex-build-installer-satisfied
+language: Rust
+message: Standalone updates use the Celados installer.
+rule:
+  pattern: '"curl -fsSL https://raw.githubusercontent.com/celados/codex-build/main/install.sh | sh"'

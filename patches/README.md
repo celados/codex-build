@@ -3,12 +3,13 @@
 Each feature gets its own directory containing structural apply and satisfied
 rules plus any regression rule or test fixture needed to detect upstream drift.
 
-Planned groups:
+Patch groups:
 
 - `mention/` — patches Codex's existing module using `mention-fs` behavior;
   it must not add a replacement provider
 - `update-channel/`
-- `computer-use/`, only if the signing boundary requires an explicit policy
+- `computer-use/` — skips only the signing-bound MCP registration
 
-Patch specifications are added only after their target seams have been verified
-against a pinned upstream commit.
+Each group has an apply rule and a satisfied rule. `scripts/apply-patches.py`
+requires exactly one recognized state and rejects ambiguous or unknown upstream
+changes.

@@ -1,0 +1,13 @@
+id: codex-build-mention-skip-hidden
+language: Rust
+message: Exclude hidden paths from the TUI mention search session.
+rule:
+  pattern: |-
+    file_search::FileSearchOptions { compute_indices: true, ..Default::default() }
+fix: |-
+  file_search::FileSearchOptions {
+      compute_indices: true,
+      // Mention should stay useful in repositories with large tool-owned dot trees.
+      exclude: vec!["**/.*".to_string()],
+      ..Default::default()
+  }

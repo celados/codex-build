@@ -1,0 +1,12 @@
+id: codex-build-update-action-satisfied
+language: Rust
+message: Custom builds always use their standalone updater.
+rule:
+  all:
+    - pattern: |-
+        pub fn get_update_action() -> Option<UpdateAction> {
+            $$$BODY
+        }
+    - has:
+        pattern: Some(UpdateAction::StandaloneUnix)
+        stopBy: end

@@ -6,15 +6,21 @@ layer rather than a source fork.
 
 ## Status
 
-The distribution boundary is established, but no binary is published yet.
-The first release is blocked on three explicit contracts:
+The repository builds the latest stable upstream Codex release for Apple
+Silicon macOS with a small, drift-detecting patch set:
 
-- patch Codex's existing mention module so its filesystem discovery and ignore
-  behavior adopts the proven `mention-fs` rules, without introducing a new
-  provider or replacing the module boundary;
-- retain the native update prompt while routing version checks and installation
-  to this repository's releases;
-- decide how the custom build handles Computer Use's OpenAI signing boundary.
+- the existing mention search excludes hidden paths while continuing to honor
+  Codex's normal ignore-file behavior; both mention v1 and v2 share this path;
+- the native update prompt remains enabled, but release checks and accepted
+  updates stay on `celados/codex-build`;
+- the Computer Use MCP server is skipped because custom-signature startup has
+  not been proven compatible. Other plugin MCP servers remain enabled.
+
+Install or update the latest release with:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/celados/codex-build/main/install.sh | sh
+```
 
 ## Build policy
 
@@ -25,6 +31,11 @@ macOS cross-compilation environment.
 Downstream changes belong in `patches/`. The upstream checkout and Cargo output
 will live in the ignored `sources/` directory so persistent runners can reuse
 incremental build state without committing upstream code.
+
+`build.sh --check --upstream-ref <tag>` validates every structural seam without
+rewriting source. A full build temporarily applies the patches, embeds a custom
+SemVer, signs the binary ad hoc, runs the hidden-path regression check, and
+restores the upstream checkout on exit.
 
 Grok Build remains an independent release repository at
 [`celados/grok-build`](https://github.com/celados/grok-build). Keeping the two

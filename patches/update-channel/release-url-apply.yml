@@ -1,0 +1,6 @@
+id: codex-build-release-url
+language: Rust
+message: Route update checks to the Celados release channel.
+rule:
+  pattern: 'const LATEST_RELEASE_URL: &str = "https://api.github.com/repos/openai/codex/releases/latest";'
+fix: 'const LATEST_RELEASE_URL: &str = "https://api.github.com/repos/celados/codex-build/releases/latest";'

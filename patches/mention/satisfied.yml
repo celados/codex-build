@@ -1,0 +1,9 @@
+id: codex-build-mention-hidden-satisfied
+language: Rust
+message: The TUI mention search excludes hidden paths.
+rule:
+  all:
+    - pattern: file_search::FileSearchOptions { $$$FIELDS }
+    - has:
+        regex: '^exclude: vec!\["\*\*/\.\*"\.to_string\(\)\]$'
+        stopBy: end

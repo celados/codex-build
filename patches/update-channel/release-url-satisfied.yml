@@ -1,0 +1,5 @@
+id: codex-build-release-url-satisfied
+language: Rust
+message: Update checks use the Celados release channel.
+rule:
+  pattern: 'const LATEST_RELEASE_URL: &str = "https://api.github.com/repos/celados/codex-build/releases/latest";'

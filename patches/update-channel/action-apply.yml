@@ -1,0 +1,13 @@
+id: codex-build-update-action
+language: Rust
+message: Custom builds always use their standalone updater.
+rule:
+  pattern: |-
+    pub fn get_update_action() -> Option<UpdateAction> {
+        UpdateAction::from_install_context(InstallContext::current())
+    }
+fix: |-
+  pub fn get_update_action() -> Option<UpdateAction> {
+      // The binary is distributed by codex-build regardless of how it was copied into PATH.
+      Some(UpdateAction::StandaloneUnix)
+  }

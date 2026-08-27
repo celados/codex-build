@@ -2,7 +2,7 @@
 type: Playbook
 title: Celados Codex Build Distribution
 description: Build and release boundary for a minimally patched Codex CLI on Apple Silicon macOS.
-status: design
+status: active
 when: Building, patching, releasing, or diagnosing the custom Codex distribution.
 ---
 
@@ -24,9 +24,9 @@ become a long-lived source fork.
   pnpm, or Homebrew distribution.
 - Keep this repository separate from Grok Build because GitHub's latest release
   is repository-wide rather than product-scoped.
-- Treat Computer Use as unavailable until a runtime test proves that a custom
-  signature is accepted. A successful CLI build is not evidence for that
-  capability.
+- Skip only the Computer Use MCP registration until a runtime test proves that
+  a custom signature is accepted. A successful CLI build is not evidence for
+  that capability; other plugin MCP registrations remain intact.
 
 ## Patch contract
 
@@ -37,12 +37,13 @@ observable states:
 2. skip only when a recognized equivalent upstream implementation exists;
 3. fail on unknown drift.
 
-Regression tests belong with behavior patches. Build scripts must restore their
-temporary source rewrites even when compilation fails.
+Regression tests belong with behavior patches. `scripts/check-mention.py`
+proves the hidden-path behavior against the upstream file-search binary. Build
+scripts restore temporary source rewrites even when compilation fails.
 
 ## Release gate
 
-Do not add a scheduled release workflow until the mention patch, updater
-routing, and the Computer Use policy are implemented and tested together. The
-first workflow should begin as manual dispatch on the persistent Mac mini,
-retain `sources/target`, cap its disk use, and publish only from `main`.
+The release workflow is manual dispatch on the persistent Mac mini, retains the
+Cargo target cache, caps its disk use, and publishes only from `main`. Keep it
+manual until several upstream release transitions demonstrate that the drift
+contract fails safely.

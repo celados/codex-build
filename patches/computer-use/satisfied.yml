@@ -1,0 +1,15 @@
+id: codex-build-disable-computer-use-mcp-satisfied
+language: Rust
+message: The signing-bound Computer Use MCP server is skipped.
+rule:
+  all:
+    - pattern: |-
+        for (name, plugin_server) in plugin_mcp_servers {
+            $$$BODY
+        }
+    - has:
+        pattern: |-
+          if name == "computer-use" {
+              continue;
+          }
+        stopBy: end
