@@ -68,19 +68,23 @@ trap restore_sources EXIT
 python3 "$repo_dir/scripts/apply-patches.py" --source "$source_dir"
 python3 "$repo_dir/scripts/set-workspace-version.py" \
   "$source_dir/codex-rs/Cargo.toml" "${upstream_ref#rust-v}" "$version"
-cargo fmt --manifest-path "$source_dir/codex-rs/Cargo.toml" --all -- --check
-
-cargo build \
-  --manifest-path "$source_dir/codex-rs/Cargo.toml" \
-  --release \
-  -p codex-cli --bin codex \
-  -p codex-file-search --bin codex-file-search
+(
+  cd "$source_dir/codex-rs"
+  # Running here activates upstream's pinned rust-toolchain.toml.
+  cargo fmt --all -- --check
+  cargo build \
+    --target aarch64-apple-darwin \
+    --release \
+    -p codex-cli --bin codex \
+    -p codex-file-search --bin codex-file-search
+)
 
 python3 "$repo_dir/scripts/check-mention.py" \
-  "$source_dir/codex-rs/target/release/codex-file-search"
+  "$source_dir/codex-rs/target/aarch64-apple-darwin/release/codex-file-search"
 
 mkdir -p "$repo_dir/dist"
-cp "$source_dir/codex-rs/target/release/codex" "$repo_dir/dist/codex-aarch64-apple-darwin"
+cp "$source_dir/codex-rs/target/aarch64-apple-darwin/release/codex" \
+  "$repo_dir/dist/codex-aarch64-apple-darwin"
 chmod 0755 "$repo_dir/dist/codex-aarch64-apple-darwin"
 codesign --force --sign - "$repo_dir/dist/codex-aarch64-apple-darwin"
 codesign --verify --strict "$repo_dir/dist/codex-aarch64-apple-darwin"
