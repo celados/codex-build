@@ -40,6 +40,8 @@ fi
 if [[ ! -d "$source_dir/.git" ]]; then
   git clone --filter=blob:none --no-checkout https://github.com/openai/codex.git "$source_dir"
 fi
+# A cancelled runner can leave this cache-only lock after its Git process has exited.
+rm -f "$source_dir/.git/index.lock"
 
 git -C "$source_dir" fetch --force --depth=1 origin "refs/tags/$upstream_ref:refs/tags/$upstream_ref"
 # sources/ is a builder-owned cache; force checkout recovers an interrupted prior patch.
