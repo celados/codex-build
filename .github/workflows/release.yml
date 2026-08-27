@@ -65,8 +65,8 @@ jobs:
       - name: Publish release
         run: |
           gh release create "${{ steps.release.outputs.release_tag }}" \
-            dist/codex-aarch64-apple-darwin \
-            dist/codex-aarch64-apple-darwin.sha256 \
+            dist/codex-aarch64-apple-darwin.tar.gz \
+            dist/codex-aarch64-apple-darwin.tar.gz.sha256 \
             dist/provenance.json \
             --repo "$GITHUB_REPOSITORY" \
             --title "Codex ${{ steps.release.outputs.version }}" \

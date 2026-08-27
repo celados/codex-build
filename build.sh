@@ -92,4 +92,9 @@ codesign --force --sign - "$repo_dir/dist/codex-aarch64-apple-darwin"
 codesign --verify --strict "$repo_dir/dist/codex-aarch64-apple-darwin"
 "$repo_dir/dist/codex-aarch64-apple-darwin" --version
 
-(cd "$repo_dir/dist" && shasum -a 256 codex-aarch64-apple-darwin > codex-aarch64-apple-darwin.sha256)
+(
+  cd "$repo_dir/dist"
+  tar -czf codex-aarch64-apple-darwin.tar.gz codex-aarch64-apple-darwin
+  shasum -a 256 codex-aarch64-apple-darwin.tar.gz \
+    > codex-aarch64-apple-darwin.tar.gz.sha256
+)
