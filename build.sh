@@ -40,8 +40,11 @@ fi
 if [[ ! -d "$source_dir/.git" ]]; then
   git clone --filter=blob:none --no-checkout https://github.com/openai/codex.git "$source_dir"
 fi
+
+# sources/ is a builder-owned cache; recover tracked files after an interrupted prior run.
+git -C "$source_dir" restore --source=HEAD --staged --worktree .
 if [[ -n "$(git -C "$source_dir" status --short)" ]]; then
-  echo "sources/ contains tracked or untracked changes; refusing to overwrite them" >&2
+  echo "sources/ contains unknown untracked files; refusing to overwrite them" >&2
   exit 1
 fi
 
