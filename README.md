@@ -9,7 +9,9 @@ layer rather than a source fork.
 The distribution boundary is established, but no binary is published yet.
 The first release is blocked on three explicit contracts:
 
-- replace Codex's built-in mention provider with `mention-fs`;
+- patch Codex's existing mention module so its filesystem discovery and ignore
+  behavior adopts the proven `mention-fs` rules, without introducing a new
+  provider or replacing the module boundary;
 - retain the native update prompt while routing version checks and installation
   to this repository's releases;
 - decide how the custom build handles Computer Use's OpenAI signing boundary.

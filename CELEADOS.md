@@ -16,6 +16,9 @@ become a long-lived source fork.
 
 - Build macOS arm64 artifacts on `[self-hosted, macOS, ARM64]`; do not maintain
   an Apple SDK or osxcross toolchain on Linux.
+- Patch Codex's existing mention module in place. `mention-fs` is the behavioral
+  reference and reusable implementation source, not a replacement provider or
+  a parallel mention stack.
 - Preserve the native Codex update prompt. Patch both the version source and
   install action so accepting the prompt cannot escape to an OpenAI, npm, Bun,
   pnpm, or Homebrew distribution.
@@ -39,7 +42,7 @@ temporary source rewrites even when compilation fails.
 
 ## Release gate
 
-Do not add a scheduled release workflow until mention replacement, updater
+Do not add a scheduled release workflow until the mention patch, updater
 routing, and the Computer Use policy are implemented and tested together. The
 first workflow should begin as manual dispatch on the persistent Mac mini,
 retain `sources/target`, cap its disk use, and publish only from `main`.

@@ -5,7 +5,8 @@ rules plus any regression rule or test fixture needed to detect upstream drift.
 
 Planned groups:
 
-- `mention-fs/`
+- `mention/` — patches Codex's existing module using `mention-fs` behavior;
+  it must not add a replacement provider
 - `update-channel/`
 - `computer-use/`, only if the signing boundary requires an explicit policy
 
