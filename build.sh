@@ -68,7 +68,8 @@ restore_sources() {
 trap restore_sources EXIT
 
 python3 "$repo_dir/scripts/apply-patches.py" --source "$source_dir"
-python3 "$repo_dir/scripts/set-workspace-version.py" "$source_dir/codex-rs/Cargo.toml" "$version"
+python3 "$repo_dir/scripts/set-workspace-version.py" \
+  "$source_dir/codex-rs/Cargo.toml" "${upstream_ref#rust-v}" "$version"
 cargo fmt --manifest-path "$source_dir/codex-rs/Cargo.toml" --all -- --check
 
 cargo build \
