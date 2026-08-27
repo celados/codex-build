@@ -46,10 +46,8 @@ rm -f "$source_dir/.git/index.lock"
 git -C "$source_dir" fetch --force --depth=1 origin "refs/tags/$upstream_ref:refs/tags/$upstream_ref"
 # sources/ is a builder-owned cache; force checkout recovers an interrupted prior patch.
 git -C "$source_dir" checkout --detach --force "$upstream_ref"
-if [[ -n "$(git -C "$source_dir" status --short)" ]]; then
-  echo "sources/ contains unknown untracked files; refusing to overwrite them" >&2
-  exit 1
-fi
+# Keep ignored Cargo artifacts, but remove non-ignored debris from interrupted jobs.
+git -C "$source_dir" clean -ffd
 python3 "$repo_dir/scripts/apply-patches.py" --source "$source_dir" --check
 
 if [[ "$check_only" -eq 1 ]]; then
