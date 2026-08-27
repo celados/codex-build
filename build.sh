@@ -85,6 +85,8 @@ python3 "$repo_dir/scripts/check-mention.py" \
 mkdir -p "$repo_dir/dist"
 cp "$source_dir/codex-rs/target/aarch64-apple-darwin/release/codex" \
   "$repo_dir/dist/codex-aarch64-apple-darwin"
+# Match upstream's macOS release staging so downloads do not carry debug symbols.
+strip -S -x "$repo_dir/dist/codex-aarch64-apple-darwin"
 chmod 0755 "$repo_dir/dist/codex-aarch64-apple-darwin"
 codesign --force --sign - "$repo_dir/dist/codex-aarch64-apple-darwin"
 codesign --verify --strict "$repo_dir/dist/codex-aarch64-apple-darwin"
