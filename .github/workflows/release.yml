@@ -1,7 +1,16 @@
 name: Build and release Codex
 
 on:
+  schedule:
+    # GitHub cron uses UTC. Run once daily, away from the top-of-hour queue.
+    - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      force_release:
+        description: Rebuild even when the latest upstream tag is already released
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -30,7 +39,14 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Resolve release versions
+        id: release
+        env:
+          FORCE_RELEASE: ${{ inputs.force_release || false }}
+        run: python3 scripts/resolve-release.py
+
       - name: Prepare persistent runner
+        if: steps.release.outputs.release == 'true'
         run: |
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           brew install ast-grep
@@ -42,17 +58,16 @@ jobs:
             fi
           fi
 
-      - name: Resolve release versions
-        id: release
-        run: python3 scripts/resolve-release.py
-
       - name: Verify patch applicability
+        if: steps.release.outputs.release == 'true'
         run: ./build.sh --check --upstream-ref "${{ steps.release.outputs.upstream_tag }}"
 
       - name: Build and smoke-test
+        if: steps.release.outputs.release == 'true'
         run: ./build.sh --upstream-ref "${{ steps.release.outputs.upstream_tag }}" --version "${{ steps.release.outputs.version }}"
 
       - name: Write provenance
+        if: steps.release.outputs.release == 'true'
         run: |
           python3 scripts/write-provenance.py \
             --output dist/provenance.json \
@@ -63,6 +78,7 @@ jobs:
             --run-id "$GITHUB_RUN_ID"
 
       - name: Publish release
+        if: steps.release.outputs.release == 'true'
         run: |
           gh release create "${{ steps.release.outputs.release_tag }}" \
             dist/codex-aarch64-apple-darwin.tar.gz \

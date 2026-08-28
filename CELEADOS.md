@@ -43,7 +43,8 @@ scripts restore temporary source rewrites even when compilation fails.
 
 ## Release gate
 
-The release workflow is manual dispatch on the persistent Mac mini, retains the
-Cargo target cache, caps its disk use, and publishes only from `main`. Keep it
-manual until several upstream release transitions demonstrate that the drift
-contract fails safely.
+The release workflow checks upstream once daily and supports a forceful manual
+dispatch. It runs on the persistent Mac mini, retains the Cargo target cache,
+caps its disk use, and publishes only from `main`. An unchanged upstream tag is
+a successful no-op; patch validation and builds run only for a new tag or an
+explicit forced rebuild.

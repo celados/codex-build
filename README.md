@@ -22,11 +22,18 @@ Install or update the latest release with:
 curl -fsSL https://raw.githubusercontent.com/celados/codex-build/main/install.sh | sh
 ```
 
+The installer checks the target binary's version before downloading an
+artifact. Re-running it at the latest version is a no-op. Downloaded artifacts
+use a temporary directory that is removed on exit; the installer does not keep
+a version cache to prune.
+
 ## Build policy
 
-macOS artifacts are built and smoke-tested on the Celados Apple Silicon Mac
+macOS artifacts are checked daily and built only when the latest stable upstream
+tag changes. They are built and smoke-tested on the Celados Apple Silicon Mac
 mini runners. Linux may perform source and patch checks, but is not a supported
-macOS cross-compilation environment.
+macOS cross-compilation environment. A manual workflow dispatch can force a
+rebuild of an already released upstream tag.
 
 Downstream changes belong in `patches/`. The upstream checkout and Cargo output
 will live in the ignored `sources/` directory so persistent runners can reuse
