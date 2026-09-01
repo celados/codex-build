@@ -68,8 +68,21 @@ trap restore_sources EXIT
 python3 "$repo_dir/scripts/apply-patches.py" --source "$source_dir"
 python3 "$repo_dir/scripts/set-workspace-version.py" \
   "$source_dir/codex-rs/Cargo.toml" "${upstream_ref#rust-v}" "$version"
+# The v8 crate's default prebuilts carry no sandbox-enabled aarch64-apple-darwin
+# archive, so the code-mode host links Codex's own published pair instead.
+v8_env="$repo_dir/.v8-cache/cargo-env"
+python3 "$repo_dir/scripts/fetch-v8.py" \
+  --cargo-lock "$source_dir/codex-rs/Cargo.lock" \
+  --cache "$repo_dir/.v8-cache" \
+  --target aarch64-apple-darwin \
+  --output "$v8_env"
+
 (
   cd "$source_dir/codex-rs"
+  set -a
+  # shellcheck source=/dev/null
+  . "$v8_env"
+  set +a
   # Running here activates upstream's pinned rust-toolchain.toml.
   cargo fmt --all -- --check
   cargo build \

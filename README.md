@@ -51,6 +51,13 @@ Downstream changes belong in `patches/`. The upstream checkout and Cargo output
 will live in the ignored `sources/` directory so persistent runners can reuse
 incremental build state without committing upstream code.
 
+The code-mode host links V8. The `v8` crate's default prebuilts ship no
+sandbox-enabled aarch64-apple-darwin archive, so `scripts/fetch-v8.py` points
+Cargo at the pair Codex publishes on its own `rusty-v8-v<crate_version>` tag,
+verifies the checksums, and caches them in the ignored `.v8-cache` directory.
+Building V8 from source is not part of this pipeline; if upstream renames those
+assets the download 404s and the build fails loudly.
+
 `build.sh --check --upstream-ref <tag>` validates every structural seam without
 rewriting source. A full build temporarily applies the patches, embeds a custom
 SemVer, signs the binary ad hoc, runs the hidden-path regression check, and
