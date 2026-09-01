@@ -76,6 +76,7 @@ python3 "$repo_dir/scripts/set-workspace-version.py" \
     --target aarch64-apple-darwin \
     --release \
     -p codex-cli --bin codex \
+    -p codex-code-mode-host --bin codex-code-mode-host \
     -p codex-file-search --bin codex-file-search
 )
 
@@ -83,18 +84,33 @@ python3 "$repo_dir/scripts/check-mention.py" \
   "$source_dir/codex-rs/target/aarch64-apple-darwin/release/codex-file-search"
 
 mkdir -p "$repo_dir/dist"
-cp "$source_dir/codex-rs/target/aarch64-apple-darwin/release/codex" \
-  "$repo_dir/dist/codex-aarch64-apple-darwin"
-# Match upstream's macOS release staging so downloads do not carry debug symbols.
-strip -S -x "$repo_dir/dist/codex-aarch64-apple-darwin"
-chmod 0755 "$repo_dir/dist/codex-aarch64-apple-darwin"
-codesign --force --sign - "$repo_dir/dist/codex-aarch64-apple-darwin"
-codesign --verify --strict "$repo_dir/dist/codex-aarch64-apple-darwin"
+
+stage_binary() {
+  local staged="$repo_dir/dist/$1-aarch64-apple-darwin"
+  cp "$source_dir/codex-rs/target/aarch64-apple-darwin/release/$1" "$staged"
+  # Match upstream's macOS release staging so downloads do not carry debug symbols.
+  strip -S -x "$staged"
+  chmod 0755 "$staged"
+  # Stripping invalidates the signature, so sign the stripped bytes.
+  codesign --force --sign - "$staged"
+  codesign --verify --strict "$staged"
+}
+
+stage_binary codex
+stage_binary codex-code-mode-host
+
 "$repo_dir/dist/codex-aarch64-apple-darwin" --version
+# The host reports no version; --help proves the stripped, re-signed binary still starts.
+"$repo_dir/dist/codex-code-mode-host-aarch64-apple-darwin" --help > /dev/null
 
 (
   cd "$repo_dir/dist"
-  tar -czf codex-aarch64-apple-darwin.tar.gz codex-aarch64-apple-darwin
+  # Codex resolves the code-mode host next to its own executable and the two speak an IPC
+  # schema that upstream changes without bumping its protocol version, so a mismatched pair
+  # fails every tool call before it reaches a shell. One archive keeps them inseparable.
+  tar -czf codex-aarch64-apple-darwin.tar.gz \
+    codex-aarch64-apple-darwin \
+    codex-code-mode-host-aarch64-apple-darwin
   shasum -a 256 codex-aarch64-apple-darwin.tar.gz \
     > codex-aarch64-apple-darwin.tar.gz.sha256
 )

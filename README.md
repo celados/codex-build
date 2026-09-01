@@ -27,6 +27,18 @@ artifact. Re-running it at the latest version is a no-op. Downloaded artifacts
 use a temporary directory that is removed on exit; the installer does not keep
 a version cache to prune.
 
+## Binary pairing
+
+Releases ship `codex` and `codex-code-mode-host` in a single archive, and the
+installer writes both. Codex resolves the host from its own directory and the
+two exchange an IPC schema that upstream extends without bumping the protocol
+version, so a host from a different upstream tag fails every tool call before
+it reaches a shell. The CLI embeds no V8, so there is no in-process fallback to
+absorb the mismatch. The installer records the pair's version in
+`.codex-code-mode-host.version` beside the binaries, replaces a host it cannot
+account for, and installs the host before codex so an interrupted run never
+leaves a new codex next to an old host.
+
 ## Build policy
 
 macOS artifacts are checked daily and built only when the latest stable upstream
