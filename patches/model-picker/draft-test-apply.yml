@@ -19,22 +19,18 @@ fix: |-
           ReasoningEffortPreset {
               effort: ReasoningEffortConfig::Low,
               description: "Low".to_string(),
-              requires_confirmation: None,
           },
           ReasoningEffortPreset {
               effort: ReasoningEffortConfig::Medium,
               description: "Medium".to_string(),
-              requires_confirmation: None,
           },
           ReasoningEffortPreset {
               effort: ReasoningEffortConfig::High,
               description: "High".to_string(),
-              requires_confirmation: None,
           },
           ReasoningEffortPreset {
               effort: ReasoningEffortConfig::Max,
               description: "Provider max".to_string(),
-              requires_confirmation: Some(false),
           },
       ];
       chat.model_catalog = std::sync::Arc::new(ModelCatalog::new(vec![preset]));
@@ -81,33 +77,4 @@ fix: |-
           } if model == "gpt-5.4"
       )));
       assert_eq!(chat.bottom_pane.composer_text(), "keep this draft");
-  }
-
-  #[tokio::test]
-  async fn custom_model_picker_does_not_bypass_required_confirmation() {
-      let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.4")).await;
-      chat.thread_id = Some(ThreadId::new());
-      let mut preset = get_available_model(&chat, "gpt-5.4");
-      preset.show_in_picker = true;
-      preset.default_reasoning_effort = ReasoningEffortConfig::Medium;
-      preset.supported_reasoning_efforts = vec![
-          ReasoningEffortPreset {
-              effort: ReasoningEffortConfig::Medium,
-              description: "Medium".to_string(),
-              requires_confirmation: None,
-          },
-          ReasoningEffortPreset {
-              effort: ReasoningEffortConfig::Max,
-              description: "Maximum".to_string(),
-              requires_confirmation: None,
-          },
-      ];
-      chat.model_catalog = std::sync::Arc::new(ModelCatalog::new(vec![preset]));
-      chat.set_reasoning_effort(Some(ReasoningEffortConfig::Medium));
-
-      chat.open_custom_model_picker();
-
-      let popup = render_bottom_popup(&chat, /*width*/ 80);
-      assert!(popup.contains("MEDIUM"));
-      assert!(!popup.contains("max"));
   }

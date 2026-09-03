@@ -1,8 +1,0 @@
-id: codex-build-app-server-reasoning-confirmation-test-satisfied
-language: Rust
-message: App-server confirmation projection has focused coverage.
-rule:
-  pattern: |-
-    fn reasoning_efforts_preserve_confirmation_metadata() {
-        $$$BODY
-    }

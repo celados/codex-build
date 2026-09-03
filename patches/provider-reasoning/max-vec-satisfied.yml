@@ -1,7 +1,0 @@
-id: codex-build-reasoning-confirmation-max-vec-default-satisfied
-language: Rust
-message: The Max selection fixture carries the confirmation default.
-rule:
-  all:
-    - kind: token_tree
-    - regex: '(?s)^\[\s*ReasoningEffortPreset\s*\{\s*effort:\s*ReasoningEffortConfig::Max,\s*description:\s*"Maximum reasoning"\.to_string\(\),\s*requires_confirmation:\s*None,\s*\}\s*\]$'

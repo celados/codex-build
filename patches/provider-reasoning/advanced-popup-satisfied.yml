@@ -1,9 +1,0 @@
-id: codex-build-advanced-reasoning-popup-confirmation-filter-satisfied
-language: Rust
-message: The confirmation popup uses provider confirmation metadata.
-rule:
-  all:
-    - pattern: let mut choices = $EXPR;
-    - has:
-        pattern: "Self::reasoning_effort_requires_confirmation(&preset, &option.effort)"
-        stopBy: end

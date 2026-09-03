@@ -1,7 +1,0 @@
-id: codex-build-reasoning-confirmation-persistence-vec-default-satisfied
-language: Rust
-message: The persistence vec fixture carries the confirmation default.
-rule:
-  all:
-    - kind: token_tree
-    - regex: '(?s)^\[\s*ReasoningEffortPreset\s*\{\s*effort:\s*ReasoningEffortConfig::Ultra,\s*description:\s*"Ultra reasoning"\.to_string\(\),\s*requires_confirmation:\s*None,\s*\}\s*\]$'

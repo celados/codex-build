@@ -1,7 +1,0 @@
-id: codex-build-reasoning-confirmation-ultra-vec-default-satisfied
-language: Rust
-message: The advanced-only fixture carries the confirmation default.
-rule:
-  all:
-    - kind: token_tree
-    - regex: '(?s)^\[\s*ReasoningEffortPreset\s*\{\s*effort:\s*ReasoningEffortConfig::Ultra,\s*description:\s*"Ultra reasoning"\.to_string\(\),\s*requires_confirmation:\s*None,\s*\}\s*\]$'

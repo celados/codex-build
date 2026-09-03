@@ -15,7 +15,7 @@ Silicon macOS with a small, drift-detecting patch set:
   updates stay on `celados/codex-build`;
 - `Alt+P` opens the custom model-and-effort picker without clearing the composer
   draft; Up/Down selects a model, Left/Right adjusts that row's effort, and Enter
-  commits both while retaining provider confirmation gates;
+  commits both; every effort declared by the provider remains directly selectable;
 - the Computer Use MCP server is skipped because custom-signature startup has
   not been proven compatible. Other plugin MCP servers remain enabled.
 

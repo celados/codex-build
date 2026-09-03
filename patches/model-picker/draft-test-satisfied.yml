@@ -1,8 +1,15 @@
 id: codex-build-model-picker-draft-test-satisfied
 language: Rust
-message: The model picker shortcut preserves a non-empty draft in tests.
+message: The model picker shortcut preserves a draft and exposes the full effort ladder.
 rule:
-  pattern: |-
-    async fn custom_model_picker_does_not_bypass_required_confirmation() {
-        $$$BODY
-    }
+  all:
+    - pattern: |-
+        async fn model_picker_filters_hidden_models_and_shortcut_preserves_draft() {
+            $$$BODY
+        }
+    - has:
+        regex: 'low · MEDIUM · high · max'
+        stopBy: end
+    - has:
+        pattern: "KeyEvent::new(KeyCode::Char('p'), KeyModifiers::ALT)"
+        stopBy: end

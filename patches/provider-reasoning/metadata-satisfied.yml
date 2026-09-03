@@ -1,9 +1,0 @@
-id: codex-build-reasoning-confirmation-metadata-satisfied
-language: Rust
-message: Reasoning effort presets expose optional confirmation metadata.
-rule:
-  all:
-    - pattern: pub struct ReasoningEffortPreset { $$$FIELDS }
-    - has:
-        regex: '^pub requires_confirmation: Option<bool>$'
-        stopBy: end

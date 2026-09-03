@@ -1,7 +1,0 @@
-id: codex-build-reasoning-confirmation-high-vec-default-satisfied
-language: Rust
-message: The single-effort fixture carries the confirmation default.
-rule:
-  all:
-    - kind: token_tree
-    - regex: '(?s)^\[\s*ReasoningEffortPreset\s*\{\s*effort:\s*ReasoningEffortConfig::High,\s*description:\s*"Greater reasoning depth for complex or ambiguous problems"\.to_string\(\),\s*requires_confirmation:\s*None,\s*\}\s*\]$'

@@ -9,8 +9,6 @@ Patch groups:
   it must not add a replacement provider
 - `update-channel/`
 - `computer-use/` — skips only the signing-bound MCP registration
-- `provider-reasoning/` — lets model catalogs opt individual efforts out of the
-  built-in Max/Ultra confirmation gate while preserving the safe default
 - `model-picker/` — mounts the custom model-plus-effort picker through narrow
   list-row and shortcut seams; its implementation remains under `overlays/`
 

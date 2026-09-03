@@ -1,9 +1,0 @@
-id: codex-build-provider-confirmation-popup-description-satisfied
-language: Rust
-message: Provider-confirmed nonstandard efforts have a safe description.
-rule:
-  all:
-    - pattern: let description = match &effort { $$$ARMS };
-    - has:
-        pattern: '"Requires explicit confirmation"'
-        stopBy: end

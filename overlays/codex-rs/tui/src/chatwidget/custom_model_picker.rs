@@ -40,13 +40,7 @@ impl ChatWidget {
             .filter(|preset| preset.show_in_picker)
             .map(|preset| {
                 let is_current = preset.model == current_model;
-                let direct_efforts = preset
-                    .supported_reasoning_efforts
-                    .iter()
-                    .filter(|option| {
-                        !Self::reasoning_effort_requires_confirmation(&preset, &option.effort)
-                    })
-                    .collect::<Vec<_>>();
+                let direct_efforts = &preset.supported_reasoning_efforts;
                 let preferred_effort = is_current
                     .then_some(current_effort.as_ref())
                     .flatten()
@@ -61,7 +55,7 @@ impl ChatWidget {
                     })
                     .unwrap_or(0);
                 let options = direct_efforts
-                    .into_iter()
+                    .iter()
                     .map(|option| {
                         SelectionAccessoryOption::new(
                             Self::reasoning_effort_sentence_label(&option.effort),
@@ -73,28 +67,17 @@ impl ChatWidget {
                     })
                     .collect();
                 let accessory = SelectionAccessory::new(options, selected_idx);
-                let requires_child_picker = accessory.is_none();
-                let actions = if requires_child_picker {
-                    let preset = preset.clone();
-                    vec![Box::new(move |tx: &AppEventSender| {
-                        tx.send(AppEvent::OpenReasoningPopup {
-                            model: preset.clone(),
-                        });
-                    }) as SelectionAction]
-                } else {
-                    Vec::new()
-                };
+                let actions = accessory.is_none().then(|| {
+                    self.custom_model_selection_actions(preset.model.clone(), /*effort*/ None)
+                });
 
                 SelectionItem {
                     name: preset.model.clone(),
                     accessory,
-                    description: requires_child_picker
-                        .then(|| "Choose effort in the confirmation picker".to_string()),
                     is_current,
                     is_default: preset.is_default,
-                    actions,
-                    dismiss_on_select: !requires_child_picker,
-                    dismiss_parent_on_child_accept: requires_child_picker,
+                    actions: actions.unwrap_or_default(),
+                    dismiss_on_select: true,
                     search_value: Some(format!("{} {}", preset.model, preset.display_name)),
                     ..Default::default()
                 }
