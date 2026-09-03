@@ -1,0 +1,5 @@
+id: codex-build-model-picker-accessory-module-satisfied
+language: Rust
+message: The custom-build selection accessory module is mounted.
+rule:
+  pattern: pub(crate) mod selection_accessory;

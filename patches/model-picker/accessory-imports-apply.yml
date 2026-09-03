@@ -1,0 +1,18 @@
+id: codex-build-model-picker-accessory-imports
+language: Rust
+message: Import the custom selection accessory at the generic list seam.
+rule:
+  all:
+    - pattern: use super::selection_tabs::tab_bar_height;
+    - not:
+        precedes:
+          pattern: use super::selection_accessory::SelectionAccessoryStep;
+          stopBy: end
+    - not:
+        follows:
+          pattern: use super::selection_accessory::SelectionAccessoryStep;
+          stopBy: end
+fix: |-
+  use super::selection_tabs::tab_bar_height;
+  use super::selection_accessory::SelectionAccessory;
+  use super::selection_accessory::SelectionAccessoryStep;

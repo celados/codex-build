@@ -1,0 +1,10 @@
+id: codex-build-model-picker-accessory-accept-satisfied
+language: Rust
+message: Enter commits the selected accessory action.
+rule:
+  pattern: |-
+    let actions = item
+        .accessory
+        .as_ref()
+        .map(SelectionAccessory::selected_actions)
+        .unwrap_or(&item.actions);

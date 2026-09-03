@@ -1,0 +1,13 @@
+id: codex-build-model-picker-custom-module
+language: Rust
+message: Mount the custom-build model picker module.
+rule:
+  all:
+    - pattern: mod model_popup_state;
+    - not:
+        follows:
+          pattern: mod custom_model_picker;
+          stopBy: end
+fix: |-
+  mod custom_model_picker;
+  mod model_popup_state;

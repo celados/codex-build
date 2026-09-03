@@ -1,0 +1,29 @@
+id: codex-build-model-picker-accessory-keys
+language: Rust
+message: Route left and right to the focused row accessory before tab navigation.
+rule:
+  all:
+    - kind: match_arm
+    - regex: '(?s)allow_plain_char_navigation.*self\.tabs_enabled\(\).*self\.keymap\.move_left\.is_pressed\(key_event\).*self\.switch_tab'
+    - not:
+        regex: 'selected_item_has_accessory'
+fix: |-
+  _ if allow_plain_char_navigation
+      && self.selected_item_has_accessory()
+      && self.keymap.move_left.is_pressed(key_event) =>
+  {
+      self.cycle_selected_accessory(SelectionAccessoryStep::Previous)
+  }
+  _ if allow_plain_char_navigation
+      && self.selected_item_has_accessory()
+      && self.keymap.move_right.is_pressed(key_event) =>
+  {
+      self.cycle_selected_accessory(SelectionAccessoryStep::Next)
+  }
+  _ if allow_plain_char_navigation
+      && self.tabs_enabled()
+      && !self.selected_item_has_accessory()
+      && self.keymap.move_left.is_pressed(key_event) =>
+  {
+      self.switch_tab(-1)
+  }

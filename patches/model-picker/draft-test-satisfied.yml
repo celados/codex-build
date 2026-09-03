@@ -3,6 +3,6 @@ language: Rust
 message: The model picker shortcut preserves a non-empty draft in tests.
 rule:
   pattern: |-
-    async fn model_picker_filters_hidden_models_and_shortcut_preserves_draft() {
+    async fn custom_model_picker_does_not_bypass_required_confirmation() {
         $$$BODY
     }

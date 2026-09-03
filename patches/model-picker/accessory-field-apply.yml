@@ -1,0 +1,21 @@
+id: codex-build-model-picker-accessory-field
+language: Rust
+message: Add the optional accessory seam to selection rows.
+rule:
+  pattern: |-
+    pub struct SelectionItem {
+        $$$BEFORE
+        pub description: Option<String>,
+        $$$AFTER
+    }
+  not:
+    has:
+      regex: '^pub accessory: Option<SelectionAccessory>$'
+      stopBy: end
+fix: |-
+  pub struct SelectionItem {
+      $$$BEFORE
+      pub description: Option<String>,
+      pub accessory: Option<SelectionAccessory>,
+      $$$AFTER
+  }

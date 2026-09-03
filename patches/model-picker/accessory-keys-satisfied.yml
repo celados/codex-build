@@ -1,0 +1,15 @@
+id: codex-build-model-picker-accessory-keys-satisfied
+language: Rust
+message: Left and right cycle the focused row accessory.
+rule:
+  all:
+    - pattern: |-
+        fn handle_key_event(&mut self, $KEY_EVENT: KeyEvent) {
+            $$$BODY
+        }
+    - has:
+        pattern: self.cycle_selected_accessory(SelectionAccessoryStep::Previous)
+        stopBy: end
+    - has:
+        pattern: self.cycle_selected_accessory(SelectionAccessoryStep::Next)
+        stopBy: end

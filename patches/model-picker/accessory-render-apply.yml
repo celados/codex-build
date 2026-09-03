@@ -1,0 +1,20 @@
+id: codex-build-model-picker-accessory-render
+language: Rust
+message: Render focused and compact accessory projections from row state.
+rule:
+  pattern: |-
+    let description = is_selected
+        .then(|| item.selected_description.clone())
+        .flatten()
+        .or_else(|| item.description.clone());
+fix: |-
+  let description = item
+      .accessory
+      .as_ref()
+      .map(|accessory| accessory.display(is_selected))
+      .or_else(|| {
+          is_selected
+              .then(|| item.selected_description.clone())
+              .flatten()
+      })
+      .or_else(|| item.description.clone());

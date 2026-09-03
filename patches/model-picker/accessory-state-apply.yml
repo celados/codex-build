@@ -1,0 +1,37 @@
+id: codex-build-model-picker-accessory-state
+language: Rust
+message: Let the generic list own accessory focus mutations.
+rule:
+  all:
+    - pattern: impl ListSelectionView { $$$METHODS }
+    - has:
+        pattern: fn selected_item_has_toggle(&self) -> bool { $$$BODY }
+        stopBy: end
+    - not:
+        has:
+          regex: 'cycle_selected_accessory'
+          stopBy: end
+fix: |-
+  impl ListSelectionView {
+      fn cycle_selected_accessory(&mut self, step: SelectionAccessoryStep) {
+          let Some(actual_idx) = self.selected_actual_idx() else {
+              return;
+          };
+          let Some(accessory) = self
+              .active_items_mut()
+              .get_mut(actual_idx)
+              .and_then(|item| item.accessory.as_mut())
+          else {
+              return;
+          };
+          accessory.cycle(step);
+      }
+
+      fn selected_item_has_accessory(&self) -> bool {
+          self.selected_actual_idx()
+              .and_then(|actual_idx| self.active_items().get(actual_idx))
+              .is_some_and(|item| item.accessory.is_some() && Self::item_is_enabled(item))
+      }
+
+      $$$METHODS
+  }

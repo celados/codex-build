@@ -57,6 +57,8 @@ fi
 restore_sources() {
   # Patch rules may touch upstream test literals as the catalog contract evolves.
   git -C "$source_dir" restore --source=HEAD -- codex-rs
+  # Overlay modules are custom-build-owned and therefore untracked by upstream.
+  git -C "$source_dir" clean -ffd -- codex-rs
 }
 trap restore_sources EXIT
 

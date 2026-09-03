@@ -1,0 +1,9 @@
+id: codex-build-model-picker-accessory-field-satisfied
+language: Rust
+message: Selection rows expose an optional custom accessory.
+rule:
+  all:
+    - pattern: pub struct SelectionItem { $$$FIELDS }
+    - has:
+        regex: '^pub accessory: Option<SelectionAccessory>$'
+        stopBy: end

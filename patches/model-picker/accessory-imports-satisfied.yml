@@ -1,0 +1,5 @@
+id: codex-build-model-picker-accessory-imports-satisfied
+language: Rust
+message: The generic list imports the custom selection accessory.
+rule:
+  pattern: use super::selection_accessory::SelectionAccessoryStep;

@@ -1,0 +1,17 @@
+id: codex-build-model-picker-accessory-accept
+language: Rust
+message: Enter commits the selected row accessory action.
+rule:
+  pattern: |-
+    for act in &item.actions {
+        act(&self.app_event_tx);
+    }
+fix: |-
+  let actions = item
+      .accessory
+      .as_ref()
+      .map(SelectionAccessory::selected_actions)
+      .unwrap_or(&item.actions);
+  for act in actions {
+      act(&self.app_event_tx);
+  }

@@ -1,0 +1,5 @@
+id: codex-build-model-picker-custom-module-satisfied
+language: Rust
+message: The custom-build model picker module is mounted.
+rule:
+  pattern: mod custom_model_picker;

@@ -1,0 +1,13 @@
+id: codex-build-model-picker-accessory-module
+language: Rust
+message: Mount the custom-build selection accessory module.
+rule:
+  all:
+    - pattern: mod skill_popup;
+    - not:
+        follows:
+          pattern: pub(crate) mod selection_accessory;
+          stopBy: end
+fix: |-
+  pub(crate) mod selection_accessory;
+  mod skill_popup;

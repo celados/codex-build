@@ -17,7 +17,7 @@ fix: |-
 
       assert_eq!(
           runtime.chat.open_model_picker,
-          vec![key_hint::alt(KeyCode::Char('m'))]
+          vec![key_hint::alt(KeyCode::Char('p'))]
       );
 
       let mut keymap = TuiKeymap::default();

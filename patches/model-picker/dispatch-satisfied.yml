@@ -11,5 +11,5 @@ rule:
         pattern: "self.chat_keymap.open_model_picker.is_pressed(key_event)"
         stopBy: end
     - has:
-        pattern: self.open_model_popup()
+        pattern: self.open_custom_model_picker()
         stopBy: end

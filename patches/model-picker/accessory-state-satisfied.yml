@@ -1,0 +1,8 @@
+id: codex-build-model-picker-accessory-state-satisfied
+language: Rust
+message: The generic list owns accessory focus mutations.
+rule:
+  pattern: |-
+    fn cycle_selected_accessory(&mut self, step: SelectionAccessoryStep) {
+        $$$BODY
+    }

@@ -1,0 +1,5 @@
+id: codex-build-model-picker-accessory-render-satisfied
+language: Rust
+message: Selection rows render their accessory projection.
+rule:
+  pattern: accessory.display(is_selected)

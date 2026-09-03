@@ -13,6 +13,9 @@ Silicon macOS with a small, drift-detecting patch set:
   Codex's normal ignore-file behavior; both mention v1 and v2 share this path;
 - the native update prompt remains enabled, but release checks and accepted
   updates stay on `celados/codex-build`;
+- `Alt+P` opens the custom model-and-effort picker without clearing the composer
+  draft; Up/Down selects a model, Left/Right adjusts that row's effort, and Enter
+  commits both while retaining provider confirmation gates;
 - the Computer Use MCP server is skipped because custom-signature startup has
   not been proven compatible. Other plugin MCP servers remain enabled.
 
@@ -47,9 +50,11 @@ mini runners. Linux may perform source and patch checks, but is not a supported
 macOS cross-compilation environment. A manual workflow dispatch can force a
 rebuild of an already released upstream tag.
 
-Downstream changes belong in `patches/`. The upstream checkout and Cargo output
-will live in the ignored `sources/` directory so persistent runners can reuse
-incremental build state without committing upstream code.
+Small upstream seams belong in `patches/`. Custom-build-owned modules live in
+`overlays/` and are copied into the disposable upstream checkout before those
+seams are applied. The upstream checkout and Cargo output live in the ignored
+`sources/` directory so persistent runners can reuse incremental build state
+without committing an upstream source fork.
 
 The code-mode host links V8. The `v8` crate's default prebuilts ship no
 sandbox-enabled aarch64-apple-darwin archive, so `scripts/fetch-v8.py` points
