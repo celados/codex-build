@@ -1,0 +1,12 @@
+id: codex-build-app-server-reasoning-confirmation-protocol-satisfied
+language: Rust
+message: model/list exposes optional provider confirmation metadata.
+rule:
+  pattern: |-
+    pub struct ReasoningEffortOption {
+        pub reasoning_effort: ReasoningEffort,
+        pub description: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        pub requires_confirmation: Option<bool>,
+    }

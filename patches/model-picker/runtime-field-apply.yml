@@ -1,0 +1,19 @@
+id: codex-build-model-picker-runtime-field
+language: Rust
+message: Store resolved model picker bindings in the Chat keymap.
+rule:
+  all:
+    - pattern: |-
+        pub(crate) struct ChatKeymap {
+            $$$FIELDS
+        }
+    - not:
+        has:
+          regex: '^pub\(crate\) open_model_picker: Vec<KeyBinding>$'
+          stopBy: end
+fix: |-
+  pub(crate) struct ChatKeymap {
+      $$$FIELDS
+      /// Open the model picker without changing the composer draft.
+      pub(crate) open_model_picker: Vec<KeyBinding>,
+  }

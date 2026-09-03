@@ -1,0 +1,34 @@
+id: codex-build-model-picker-keymap-tests
+language: Rust
+message: Cover the model picker default, remapping, and unbinding.
+rule:
+  all:
+    - pattern: |-
+        fn defaults_include_reassignable_main_surface_actions() {
+            $$$BODY
+        }
+    - not:
+        has:
+          regex: 'open_model_picker'
+          stopBy: end
+fix: |-
+  fn defaults_include_reassignable_main_surface_actions() {
+      $$$BODY
+
+      assert_eq!(
+          runtime.chat.open_model_picker,
+          vec![key_hint::alt(KeyCode::Char('m'))]
+      );
+
+      let mut keymap = TuiKeymap::default();
+      keymap.chat.open_model_picker = Some(one("ctrl-x"));
+      let remapped = RuntimeKeymap::from_config(&keymap).expect("model picker should remap");
+      assert_eq!(
+          remapped.chat.open_model_picker,
+          vec![key_hint::ctrl(KeyCode::Char('x'))]
+      );
+
+      keymap.chat.open_model_picker = Some(KeybindingsSpec::Many(Vec::new()));
+      let unbound = RuntimeKeymap::from_config(&keymap).expect("model picker should unbind");
+      assert!(unbound.chat.open_model_picker.is_empty());
+  }

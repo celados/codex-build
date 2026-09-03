@@ -1,0 +1,5 @@
+id: codex-build-model-picker-action-catalog-satisfied
+language: Rust
+message: The keymap action catalog includes the model picker.
+rule:
+  pattern: action("chat", "Chat", "open_model_picker", "Open the model picker without changing the draft.")

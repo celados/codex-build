@@ -1,0 +1,15 @@
+id: codex-build-model-picker-chat-dispatch-satisfied
+language: Rust
+message: The model picker action dispatches before composer input.
+rule:
+  all:
+    - pattern: |-
+        pub(crate) fn handle_key_event(&mut self, key_event: KeyEvent) {
+            $$$BODY
+        }
+    - has:
+        pattern: "self.chat_keymap.open_model_picker.is_pressed(key_event)"
+        stopBy: end
+    - has:
+        pattern: self.open_model_popup()
+        stopBy: end

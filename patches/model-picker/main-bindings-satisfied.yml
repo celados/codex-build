@@ -1,0 +1,9 @@
+id: codex-build-model-picker-main-binding-inventory-satisfied
+language: Rust
+message: The main binding inventory includes the model picker.
+rule:
+  all:
+    - pattern: let main_bindings = [$$$ITEMS];
+    - has:
+        pattern: self.chat.open_model_picker.as_slice()
+        stopBy: end

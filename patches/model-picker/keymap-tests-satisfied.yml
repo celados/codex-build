@@ -1,0 +1,15 @@
+id: codex-build-model-picker-keymap-tests-satisfied
+language: Rust
+message: Model picker keymap tests cover default, remapping, and unbinding.
+rule:
+  all:
+    - pattern: |-
+        fn defaults_include_reassignable_main_surface_actions() {
+            $$$BODY
+        }
+    - has:
+        regex: 'open_model_picker'
+        stopBy: end
+    - has:
+        pattern: "Some(KeybindingsSpec::Many(Vec::new()))"
+        stopBy: end

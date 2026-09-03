@@ -1,0 +1,9 @@
+id: codex-build-model-picker-runtime-resolution-satisfied
+language: Rust
+message: Configured model picker bindings are resolved.
+rule:
+  all:
+    - pattern: ChatKeymap { $$$FIELDS }
+    - has:
+        pattern: "keymap.chat.open_model_picker.as_ref()"
+        stopBy: end

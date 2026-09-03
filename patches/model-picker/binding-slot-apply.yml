@@ -1,0 +1,23 @@
+id: codex-build-model-picker-binding-slot
+language: Rust
+message: Make the model picker editable in the keymap configuration UI.
+rule:
+  all:
+    - pattern:
+        context: |-
+          match (context, action) {
+              ("chat", "interrupt_turn") => Some(&mut keymap.chat.interrupt_turn),
+          }
+        selector: match_arm
+    - not:
+        precedes:
+          pattern:
+            context: |-
+              match (context, action) {
+                  ("chat", "open_model_picker") => Some(&mut keymap.chat.open_model_picker),
+              }
+            selector: match_arm
+          stopBy: end
+fix: |-
+  ("chat", "interrupt_turn") => Some(&mut keymap.chat.interrupt_turn),
+  ("chat", "open_model_picker") => Some(&mut keymap.chat.open_model_picker),

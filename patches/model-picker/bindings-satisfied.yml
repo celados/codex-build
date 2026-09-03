@@ -1,0 +1,7 @@
+id: codex-build-model-picker-action-binding-inventory-satisfied
+language: Rust
+message: The shared Chat action inventory includes the model picker.
+rule:
+  all:
+    - kind: token_tree
+    - regex: '(?s)^\[\s*interrupt_turn,\s*decrease_reasoning_effort,\s*increase_reasoning_effort,\s*open_model_picker,\s*previous_permission_mode,\s*next_permission_mode,\s*edit_queued_message,\s*\]$'

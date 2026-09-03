@@ -1,0 +1,33 @@
+id: codex-build-model-picker-chat-dispatch
+language: Rust
+message: Open the model picker before composer input can consume the key.
+rule:
+  pattern: |-
+    if self.handle_reasoning_shortcut(key_event) || self.handle_permission_shortcut(key_event) {
+        self.bottom_pane.clear_quit_shortcut_hint();
+        self.quit_shortcut_expires_at = None;
+        self.quit_shortcut_key = None;
+        return;
+    }
+fix: |-
+  {
+      let shortcut_handled = self.handle_reasoning_shortcut(key_event)
+          || self.handle_permission_shortcut(key_event);
+      if shortcut_handled {
+          self.bottom_pane.clear_quit_shortcut_hint();
+          self.quit_shortcut_expires_at = None;
+          self.quit_shortcut_key = None;
+          return;
+      }
+
+      if key_event.kind == KeyEventKind::Press
+          && self.chat_keymap.open_model_picker.is_pressed(key_event)
+          && self.bottom_pane.no_modal_or_popup_active()
+      {
+          self.bottom_pane.clear_quit_shortcut_hint();
+          self.quit_shortcut_expires_at = None;
+          self.quit_shortcut_key = None;
+          self.open_model_popup();
+          return;
+      }
+  }

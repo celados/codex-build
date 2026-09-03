@@ -1,0 +1,10 @@
+id: codex-build-model-picker-binding-slot-satisfied
+language: Rust
+message: The keymap editor resolves the model picker config slot.
+rule:
+  pattern:
+    context: |-
+      match (context, action) {
+          ("chat", "open_model_picker") => Some(&mut keymap.chat.open_model_picker),
+      }
+    selector: match_arm

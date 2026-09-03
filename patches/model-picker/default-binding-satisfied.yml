@@ -1,0 +1,9 @@
+id: codex-build-model-picker-default-binding-satisfied
+language: Rust
+message: Alt+M is the default model picker binding.
+rule:
+  all:
+    - pattern: ChatKeymap { $$$FIELDS }
+    - has:
+        pattern: "default_bindings![alt(KeyCode::Char('m'))]"
+        stopBy: end

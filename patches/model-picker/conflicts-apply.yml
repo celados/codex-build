@@ -1,0 +1,29 @@
+id: codex-build-model-picker-conflict-validation
+language: Rust
+message: Include the model picker in main-surface conflict validation.
+rule:
+  all:
+    - pattern: |-
+        validate_no_shadow_with_allowed_overlaps(
+            "main",
+            [$$$PRIMARY],
+            [$$$SHADOWED],
+            $ALLOWED,
+        )
+    - not:
+        has:
+          pattern: self.chat.open_model_picker.as_slice()
+          stopBy: end
+fix: |-
+  validate_no_shadow_with_allowed_overlaps(
+      "main",
+      [
+          $$$PRIMARY
+          (
+              "chat.open_model_picker",
+              self.chat.open_model_picker.as_slice(),
+          ),
+      ],
+      [$$$SHADOWED],
+      $ALLOWED,
+  )

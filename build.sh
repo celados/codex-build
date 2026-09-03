@@ -55,13 +55,8 @@ if [[ "$check_only" -eq 1 ]]; then
 fi
 
 restore_sources() {
-  git -C "$source_dir" restore --source=HEAD -- \
-    codex-rs/Cargo.toml \
-    codex-rs/Cargo.lock \
-    codex-rs/core/src/config/mod.rs \
-    codex-rs/tui/src/file_search.rs \
-    codex-rs/tui/src/update_action.rs \
-    codex-rs/tui/src/updates.rs
+  # Patch rules may touch upstream test literals as the catalog contract evolves.
+  git -C "$source_dir" restore --source=HEAD -- codex-rs
 }
 trap restore_sources EXIT
 
@@ -84,6 +79,7 @@ python3 "$repo_dir/scripts/fetch-v8.py" \
   . "$v8_env"
   set +a
   # Running here activates upstream's pinned rust-toolchain.toml.
+  cargo fmt --all
   cargo fmt --all -- --check
   cargo build \
     --target aarch64-apple-darwin \

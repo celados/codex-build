@@ -1,0 +1,16 @@
+id: codex-build-model-picker-action-catalog
+language: Rust
+message: Show the model picker in keymap configuration UI.
+rule:
+  all:
+    - pattern: |-
+        pub(super) const KEYMAP_ACTIONS: &[KeymapActionDescriptor] = &[$$$ACTIONS];
+    - not:
+        has:
+          pattern: action("chat", "Chat", "open_model_picker", "Open the model picker without changing the draft.")
+          stopBy: end
+fix: |-
+  pub(super) const KEYMAP_ACTIONS: &[KeymapActionDescriptor] = &[
+      $$$ACTIONS
+      action("chat", "Chat", "open_model_picker", "Open the model picker without changing the draft."),
+  ];

@@ -9,6 +9,9 @@ Patch groups:
   it must not add a replacement provider
 - `update-channel/`
 - `computer-use/` — skips only the signing-bound MCP registration
+- `provider-reasoning/` — lets model catalogs opt individual efforts out of the
+  built-in Max/Ultra confirmation gate while preserving the safe default
+- `model-picker/` — adds the configurable, draft-preserving Chat model picker action
 
 Each group has an apply rule and a satisfied rule. `scripts/apply-patches.py`
 requires exactly one recognized state and rejects ambiguous or unknown upstream

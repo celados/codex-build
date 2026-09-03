@@ -1,0 +1,7 @@
+id: codex-build-app-server-reasoning-confirmation-expected-vec-satisfied
+language: Rust
+message: model/list macro fixtures retain safe confirmation defaults.
+rule:
+  all:
+    - kind: token_tree
+    - regex: '(?s)^\[\s*ReasoningEffortOption\s*\{\s*reasoning_effort:\s*"max"\.parse\(\)\.map_err\(Error::msg\)\?,\s*description:\s*"Maximum"\.to_string\(\),\s*requires_confirmation:\s*None,\s*\},\s*ReasoningEffortOption\s*\{\s*reasoning_effort:\s*"low"\.parse\(\)\.map_err\(Error::msg\)\?,\s*description:\s*"Low"\.to_string\(\),\s*requires_confirmation:\s*None,\s*\},\s*ReasoningEffortOption\s*\{\s*reasoning_effort:\s*"focused"\.parse\(\)\.map_err\(Error::msg\)\?,\s*description:\s*"Focused"\.to_string\(\),\s*requires_confirmation:\s*None,\s*\},\s*\]$'

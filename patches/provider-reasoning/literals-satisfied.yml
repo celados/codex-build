@@ -1,0 +1,9 @@
+id: codex-build-reasoning-confirmation-literal-defaults-satisfied
+language: Rust
+message: Existing reasoning effort preset literals preserve missing metadata semantics.
+rule:
+  all:
+    - pattern: ReasoningEffortPreset { $$$FIELDS }
+    - has:
+        regex: '^requires_confirmation: None$'
+        stopBy: end

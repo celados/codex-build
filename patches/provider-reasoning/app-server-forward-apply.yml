@@ -1,0 +1,15 @@
+id: codex-build-app-server-reasoning-confirmation-forward
+language: Rust
+message: Preserve confirmation metadata when app-server projects model presets.
+rule:
+  pattern: |-
+    ReasoningEffortOption {
+        reasoning_effort: preset.effort,
+        description: preset.description,
+    }
+fix: |-
+  ReasoningEffortOption {
+      reasoning_effort: preset.effort,
+      description: preset.description,
+      requires_confirmation: preset.requires_confirmation,
+  }

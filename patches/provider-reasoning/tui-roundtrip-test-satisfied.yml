@@ -1,0 +1,8 @@
+id: codex-build-tui-reasoning-confirmation-roundtrip-test-satisfied
+language: Rust
+message: TUI model/list confirmation round-trip has focused coverage.
+rule:
+  pattern: |-
+    fn model_preset_from_api_model_preserves_reasoning_confirmation_metadata() {
+        $$$BODY
+    }

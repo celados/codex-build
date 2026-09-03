@@ -1,0 +1,20 @@
+id: codex-build-advanced-reasoning-popup-confirmation-filter
+language: Rust
+message: Populate the confirmation popup from provider confirmation metadata.
+rule:
+  pattern: |-
+    let mut choices = preset
+        .supported_reasoning_efforts
+        .iter()
+        .map(|option| option.effort.clone())
+        .filter(Self::is_advanced_reasoning_effort)
+        .collect::<Vec<_>>();
+fix: |-
+  let mut choices = preset
+      .supported_reasoning_efforts
+      .iter()
+      .filter(|option| {
+          Self::reasoning_effort_requires_confirmation(&preset, &option.effort)
+      })
+      .map(|option| option.effort.clone())
+      .collect::<Vec<_>>();

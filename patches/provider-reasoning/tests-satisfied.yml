@@ -1,0 +1,12 @@
+id: codex-build-reasoning-confirmation-shortcut-tests-satisfied
+language: Rust
+message: Reasoning shortcut tests cover provider confirmation opt-out.
+rule:
+  all:
+    - pattern: |-
+        async fn reasoning_up_shortcut_does_not_silently_enter_advanced_effort() {
+            $$$BODY
+        }
+    - has:
+        regex: 'requires_confirmation:\s*Some\(false\)'
+        stopBy: end

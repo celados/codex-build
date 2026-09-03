@@ -1,0 +1,11 @@
+id: codex-build-reasoning-shortcut-confirmation-label-satisfied
+language: Rust
+message: Shortcut warning labels use provider confirmation metadata.
+rule:
+  pattern: |-
+    choices
+        .iter()
+        .filter(|effort| Self::reasoning_effort_requires_confirmation(&preset, effort))
+        .map(Self::reasoning_effort_label)
+        .collect::<Vec<_>>()
+        .join(" and ")

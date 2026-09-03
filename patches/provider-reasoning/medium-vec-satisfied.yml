@@ -1,0 +1,7 @@
+id: codex-build-reasoning-confirmation-medium-vec-default-satisfied
+language: Rust
+message: The model picker fixture carries the confirmation default.
+rule:
+  all:
+    - kind: token_tree
+    - regex: '(?s)^\[\s*ReasoningEffortPreset\s*\{\s*effort:\s*ReasoningEffortConfig::Medium,\s*description:\s*"medium"\.to_string\(\),\s*requires_confirmation:\s*None,\s*\}\s*\]$'

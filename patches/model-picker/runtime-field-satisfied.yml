@@ -1,0 +1,9 @@
+id: codex-build-model-picker-runtime-field-satisfied
+language: Rust
+message: Resolved Chat keymaps carry model picker bindings.
+rule:
+  all:
+    - pattern: pub(crate) struct ChatKeymap { $$$FIELDS }
+    - has:
+        regex: '^pub\(crate\) open_model_picker: Vec<KeyBinding>$'
+        stopBy: end

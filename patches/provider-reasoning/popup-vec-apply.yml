@@ -1,0 +1,20 @@
+id: codex-build-reasoning-confirmation-popup-vec-defaults
+language: Rust
+message: Preserve confirmation defaults in the reasoning popup vec fixture.
+rule:
+  all:
+    - kind: token_tree
+    - regex: '(?s)^\[\s*ReasoningEffortPreset\s*\{\s*effort:\s*ReasoningEffortConfig::High,\s*description:\s*"High reasoning"\.to_string\(\),\s*\},\s*ReasoningEffortPreset\s*\{\s*effort:\s*ReasoningEffortConfig::Ultra,\s*description:\s*"Ultra reasoning"\.to_string\(\),\s*\},\s*\]$'
+fix: |-
+  [
+      ReasoningEffortPreset {
+          effort: ReasoningEffortConfig::High,
+          description: "High reasoning".to_string(),
+          requires_confirmation: None,
+      },
+      ReasoningEffortPreset {
+          effort: ReasoningEffortConfig::Ultra,
+          description: "Ultra reasoning".to_string(),
+          requires_confirmation: None,
+      },
+  ]

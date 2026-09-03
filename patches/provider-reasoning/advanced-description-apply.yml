@@ -1,0 +1,24 @@
+id: codex-build-provider-confirmation-popup-description
+language: Rust
+message: Render provider-confirmed nonstandard efforts without assuming Max or Ultra.
+rule:
+  pattern: |-
+    let description = match &effort {
+        ReasoningEffortConfig::Max => {
+            "For difficult problems when quality matters more than speed · higher usage"
+        }
+        ReasoningEffortConfig::Ultra => {
+            "For demanding work using multiple agents · highest usage"
+        }
+        _ => unreachable!("advanced choices are limited to Max and Ultra"),
+    };
+fix: |-
+  let description = match &effort {
+      ReasoningEffortConfig::Max => {
+          "For difficult problems when quality matters more than speed · higher usage"
+      }
+      ReasoningEffortConfig::Ultra => {
+          "For demanding work using multiple agents · highest usage"
+      }
+      _ => "Requires explicit confirmation",
+  };

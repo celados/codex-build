@@ -1,0 +1,9 @@
+id: codex-build-auto-model-reasoning-confirmation-satisfied
+language: Rust
+message: Auto model selection uses provider confirmation metadata.
+rule:
+  all:
+    - pattern: let requires_advanced_selection = $VALUE;
+    - has:
+        pattern: "Self::reasoning_effort_requires_confirmation(&preset, &preset.default_reasoning_effort)"
+        stopBy: end

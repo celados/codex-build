@@ -1,0 +1,18 @@
+id: codex-build-model-picker-default-binding
+language: Rust
+message: Bind the model picker to Alt+M by default.
+rule:
+  all:
+    - pattern: ChatKeymap { $$$FIELDS }
+    - has:
+        pattern: "default_bindings![alt(KeyCode::Char('.')), shift(KeyCode::Up)]"
+        stopBy: end
+    - not:
+        has:
+          pattern: "default_bindings![alt(KeyCode::Char('m'))]"
+          stopBy: end
+fix: |-
+  ChatKeymap {
+      $$$FIELDS
+      open_model_picker: default_bindings![alt(KeyCode::Char('m'))],
+  }

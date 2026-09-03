@@ -1,0 +1,9 @@
+id: codex-build-model-picker-config-action-satisfied
+language: Rust
+message: The model picker is configurable in the Chat keymap.
+rule:
+  all:
+    - pattern: pub struct TuiChatKeymap { $$$FIELDS }
+    - has:
+        regex: '^pub open_model_picker: Option<KeybindingsSpec>$'
+        stopBy: end

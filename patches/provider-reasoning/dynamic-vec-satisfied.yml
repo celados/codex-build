@@ -1,0 +1,7 @@
+id: codex-build-reasoning-confirmation-dynamic-vec-default-satisfied
+language: Rust
+message: The Plan-mode effort fixture carries the confirmation default.
+rule:
+  all:
+    - kind: token_tree
+    - regex: '(?s)^\[\s*ReasoningEffortPreset\s*\{\s*effort:\s*effort\.clone\(\),\s*description:\s*"Advanced reasoning"\.to_string\(\),\s*requires_confirmation:\s*None,\s*\}\s*\]$'

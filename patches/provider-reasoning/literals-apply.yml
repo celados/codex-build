@@ -1,0 +1,16 @@
+id: codex-build-reasoning-confirmation-literal-defaults
+language: Rust
+message: Preserve the safe default in existing reasoning effort preset literals.
+rule:
+  all:
+    - pattern: ReasoningEffortPreset { $$$FIELDS }
+    - not:
+        has:
+          regex: '^requires_confirmation: .+$'
+          stopBy: end
+    - not:
+        has:
+          pattern: effort.reasoning_effort
+          stopBy: end
+fix: |-
+  ReasoningEffortPreset { $$$FIELDS requires_confirmation: None }

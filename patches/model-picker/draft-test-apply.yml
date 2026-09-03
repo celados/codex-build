@@ -1,0 +1,25 @@
+id: codex-build-model-picker-draft-test
+language: Rust
+message: Cover draft preservation when the model picker shortcut opens.
+rule:
+  pattern: |-
+    async fn model_picker_hides_show_in_picker_false_models_from_cache() {
+        $$$BODY
+    }
+fix: |-
+  async fn model_picker_filters_hidden_models_and_shortcut_preserves_draft() {
+      $$$BODY
+
+      let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.4")).await;
+      chat.thread_id = Some(ThreadId::new());
+      chat.bottom_pane.set_composer_text(
+          "keep this draft".to_string(),
+          Vec::new(),
+          Vec::new(),
+      );
+
+      chat.handle_key_event(KeyEvent::new(KeyCode::Char('m'), KeyModifiers::ALT));
+
+      assert_eq!(chat.bottom_pane.composer_text(), "keep this draft");
+      assert!(render_bottom_popup(&chat, /*width*/ 80).contains("Select Model"));
+  }

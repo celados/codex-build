@@ -1,0 +1,39 @@
+id: codex-build-tui-reasoning-confirmation-roundtrip-test
+language: Rust
+message: Prove TUI retains confirmation metadata returned by model/list.
+rule:
+  all:
+    - pattern:
+        context: |-
+          fn api_model_with_upgrade_retirement_at(retirement_at: Option<i64>) -> ApiModel {
+              $$$BODY
+          }
+        selector: function_item
+    - not:
+        precedes:
+          pattern: |-
+            fn model_preset_from_api_model_preserves_reasoning_confirmation_metadata() {
+                $$$TEST_BODY
+            }
+          stopBy: end
+fix: |-
+  fn api_model_with_upgrade_retirement_at(retirement_at: Option<i64>) -> ApiModel {
+      $$$BODY
+  }
+
+  #[test]
+  fn model_preset_from_api_model_preserves_reasoning_confirmation_metadata() {
+      let mut model = api_model_with_upgrade_retirement_at(None);
+      model.supported_reasoning_efforts = vec![
+          codex_app_server_protocol::ReasoningEffortOption {
+              reasoning_effort: ReasoningEffort::Max,
+              description: "Provider max".to_string(),
+              requires_confirmation: Some(false),
+          },
+      ];
+
+      assert_eq!(
+          model_preset_from_api_model(model).supported_reasoning_efforts[0].requires_confirmation,
+          Some(false)
+      );
+  }

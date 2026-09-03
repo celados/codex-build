@@ -1,0 +1,25 @@
+id: codex-build-app-server-reasoning-confirmation-expected-vec
+language: Rust
+message: Preserve safe defaults in the model/list macro fixture.
+rule:
+  all:
+    - kind: token_tree
+    - regex: '(?s)^\[\s*ReasoningEffortOption\s*\{\s*reasoning_effort:\s*"max"\.parse\(\)\.map_err\(Error::msg\)\?,\s*description:\s*"Maximum"\.to_string\(\),\s*\},\s*ReasoningEffortOption\s*\{\s*reasoning_effort:\s*"low"\.parse\(\)\.map_err\(Error::msg\)\?,\s*description:\s*"Low"\.to_string\(\),\s*\},\s*ReasoningEffortOption\s*\{\s*reasoning_effort:\s*"focused"\.parse\(\)\.map_err\(Error::msg\)\?,\s*description:\s*"Focused"\.to_string\(\),\s*\},\s*\]$'
+fix: |-
+  [
+      ReasoningEffortOption {
+          reasoning_effort: "max".parse().map_err(Error::msg)?,
+          description: "Maximum".to_string(),
+          requires_confirmation: None,
+      },
+      ReasoningEffortOption {
+          reasoning_effort: "low".parse().map_err(Error::msg)?,
+          description: "Low".to_string(),
+          requires_confirmation: None,
+      },
+      ReasoningEffortOption {
+          reasoning_effort: "focused".parse().map_err(Error::msg)?,
+          description: "Focused".to_string(),
+          requires_confirmation: None,
+      },
+  ]

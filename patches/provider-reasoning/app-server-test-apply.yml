@@ -1,0 +1,56 @@
+id: codex-build-app-server-reasoning-confirmation-test
+language: Rust
+message: Prove app-server preserves provider confirmation metadata.
+rule:
+  all:
+    - pattern: |-
+        fn reasoning_efforts_from_preset(
+            efforts: Vec<ReasoningEffortPreset>,
+        ) -> Vec<ReasoningEffortOption> {
+            efforts
+                .into_iter()
+                .map(|preset| ReasoningEffortOption {
+                    reasoning_effort: preset.effort,
+                    description: preset.description,
+                })
+                .collect()
+        }
+    - not:
+        precedes:
+          pattern: |-
+            mod tests {
+                $$$BODY
+            }
+          stopBy: end
+fix: |-
+  fn reasoning_efforts_from_preset(
+      efforts: Vec<ReasoningEffortPreset>,
+  ) -> Vec<ReasoningEffortOption> {
+      efforts
+          .into_iter()
+          .map(|preset| ReasoningEffortOption {
+              reasoning_effort: preset.effort,
+              description: preset.description,
+          })
+          .collect()
+  }
+
+  #[cfg(test)]
+  mod tests {
+      use super::*;
+      use codex_protocol::openai_models::ReasoningEffort;
+
+      #[test]
+      fn reasoning_efforts_preserve_confirmation_metadata() {
+          let efforts = vec![ReasoningEffortPreset {
+              effort: ReasoningEffort::Max,
+              description: "Provider max".to_string(),
+              requires_confirmation: Some(false),
+          }];
+
+          assert_eq!(
+              reasoning_efforts_from_preset(efforts)[0].requires_confirmation,
+              Some(false)
+          );
+      }
+  }

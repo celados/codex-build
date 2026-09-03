@@ -1,0 +1,19 @@
+id: codex-build-model-picker-config-action
+language: Rust
+message: Expose the model picker as a configurable Chat action.
+rule:
+  all:
+    - pattern: |-
+        pub struct TuiChatKeymap {
+            $$$FIELDS
+        }
+    - not:
+        has:
+          regex: '^pub open_model_picker: Option<KeybindingsSpec>$'
+          stopBy: end
+fix: |-
+  pub struct TuiChatKeymap {
+      $$$FIELDS
+      /// Open the model picker without changing the composer draft.
+      pub open_model_picker: Option<KeybindingsSpec>,
+  }

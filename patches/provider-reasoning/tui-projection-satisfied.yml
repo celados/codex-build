@@ -1,0 +1,10 @@
+id: codex-build-tui-reasoning-confirmation-projection-satisfied
+language: Rust
+message: TUI model presets retain model/list confirmation metadata.
+rule:
+  pattern: |-
+    ReasoningEffortPreset {
+        effort: effort.reasoning_effort,
+        description: effort.description,
+        requires_confirmation: effort.requires_confirmation,
+    }

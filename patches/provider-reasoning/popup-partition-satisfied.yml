@@ -1,0 +1,8 @@
+id: codex-build-reasoning-popup-confirmation-partition-satisfied
+language: Rust
+message: The normal reasoning popup uses provider confirmation metadata.
+rule:
+  pattern: |-
+    let (choices, advanced_choices): (Vec<_>, Vec<_>) = all_choices
+        .into_iter()
+        .partition(|effort| !Self::reasoning_effort_requires_confirmation(&preset, effort));
