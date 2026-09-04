@@ -95,6 +95,10 @@ python3 "$repo_dir/scripts/fetch-v8.py" \
   # shellcheck source=/dev/null
   . "$v8_env"
   set +a
+  # Upstream keeps line tables so its official binaries stay symbolicateable;
+  # this distribution strips every binary before signing (see stage_binary),
+  # so the debuginfo only inflates the target directory and codegen time.
+  export CARGO_PROFILE_RELEASE_DEBUG=0
   # Running here activates upstream's pinned rust-toolchain.toml.
   cargo fmt --all
   cargo fmt --all -- --check
