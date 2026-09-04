@@ -16,6 +16,9 @@ Silicon macOS with a small, drift-detecting patch set:
 - `Alt+P` opens the custom model-and-effort picker without clearing the composer
   draft; Up/Down selects a model, Left/Right adjusts that row's effort, and Enter
   commits both; every effort declared by the provider remains directly selectable;
+- finite background commands can opt into `on_exit: "resume_turn"`; their exit
+  is queued through Codex's existing session input path and resumes the agent
+  when the thread is idle;
 - the Computer Use MCP server is skipped because custom-signature startup has
   not been proven compatible. Other plugin MCP servers remain enabled.
 
@@ -44,11 +47,11 @@ leaves a new codex next to an old host.
 
 ## Build policy
 
-macOS artifacts are checked daily and built only when the latest stable upstream
-tag changes. They are built and smoke-tested on the Celados Apple Silicon Mac
-mini runners. Linux may perform source and patch checks, but is not a supported
-macOS cross-compilation environment. A manual workflow dispatch can force a
-rebuild of an already released upstream tag.
+macOS artifacts are checked weekly at 04:17 Sunday in Asia/Shanghai and built
+only when the latest stable upstream tag changes. They are built and smoke-tested
+on the Celados Apple Silicon Mac mini runners. Linux may perform source and patch
+checks, but is not a supported macOS cross-compilation environment. A manual
+workflow dispatch can force a rebuild of an already released upstream tag.
 
 Small upstream seams belong in `patches/`. Custom-build-owned modules live in
 `overlays/` and are copied into the disposable upstream checkout before those

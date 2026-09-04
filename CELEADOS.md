@@ -43,7 +43,7 @@ scripts restore temporary source rewrites even when compilation fails.
 
 ## Release gate
 
-The release workflow checks upstream once daily and supports a forceful manual
+The release workflow checks upstream weekly at 04:17 Sunday in Asia/Shanghai and supports a forceful manual
 dispatch. It runs on the shared Mac mini, builds from a fresh upstream checkout,
 and removes the project checkout, `sources/`, `dist/`, `.cargo-home/`, and
 `.v8-cache/` after every attempt. It publishes only from `main`; an unchanged

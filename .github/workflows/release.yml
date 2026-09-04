@@ -2,8 +2,8 @@ name: Build and release Codex
 
 on:
   schedule:
-    # GitHub cron uses UTC. Run once daily, away from the top-of-hour queue.
-    - cron: "17 3 * * *"
+    # GitHub cron uses UTC. Saturday 20:17 UTC is Sunday 04:17 in Asia/Shanghai.
+    - cron: "17 20 * * 6"
   workflow_dispatch:
     inputs:
       force_release:
@@ -36,6 +36,10 @@ jobs:
       - name: Clone disposable builder
         run: |
           builder="$RUNNER_TEMP/codex-builder"
+          cd "$RUNNER_TEMP"
+          # A runner that has not executed the cold-build workflow may still carry the
+          # old persistent checkout, so reclaim it before allocating another full build.
+          rm -rf "$GITHUB_WORKSPACE"
           rm -rf "$builder"
           git clone --depth=1 --filter=blob:none \
             "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$builder"
@@ -98,6 +102,7 @@ jobs:
 
       - name: Remove build workspace
         if: always()
+        working-directory: ${{ runner.temp }}
         run: |
           # No checkout action follows this step, so its workspace can be
           # removed without breaking a post-action working directory.
