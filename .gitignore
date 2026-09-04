@@ -1,5 +1,6 @@
 /sources
 /dist
+/.cargo-home
 /.ci-logs
 /.v8-cache
 __pycache__/

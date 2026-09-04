@@ -26,7 +26,11 @@ jobs:
     timeout-minutes: 180
     env:
       CARGO_BUILD_JOBS: 6
-      CARGO_INCREMENTAL: 1
+      # Disk safety outranks build speed on the shared Mac mini runner.
+      CARGO_INCREMENTAL: 0
+      # Keep Cargo's registry download cache inside the disposable job tree;
+      # ~/.cargo remains only the runner-owned rustup executable location.
+      CARGO_HOME: ${{ github.workspace }}/.cargo-home
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
       GH_TOKEN: ${{ github.token }}
@@ -35,7 +39,9 @@ jobs:
       - name: Check out builder
         uses: actions/checkout@v7
         with:
-          clean: false
+          # A cancelled or killed job can miss the explicit cleanup below.
+          # Checkout cleanup also bounds stale ignored artifacts to one run.
+          clean: true
           fetch-depth: 1
           persist-credentials: false
 
@@ -45,18 +51,14 @@ jobs:
           FORCE_RELEASE: ${{ inputs.force_release || false }}
         run: python3 scripts/resolve-release.py
 
-      - name: Prepare persistent runner
+      - name: Prepare cold runner
         if: steps.release.outputs.release == 'true'
         run: |
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           brew install ast-grep
-          rm -rf dist
-          if [[ -d sources/codex-rs/target ]]; then
-            target_kib="$(du -sk sources/codex-rs/target | awk '{print $1}')"
-            if ((target_kib > 41943040)); then
-              rm -rf sources/codex-rs/target
-            fi
-          fi
+          # Build from a fresh upstream checkout every release. The runner is
+          # shared storage, so intentionally do not retain Cargo or V8 state.
+          rm -rf dist sources .cargo-home .v8-cache
 
       - name: Verify patch applicability
         if: steps.release.outputs.release == 'true'
@@ -87,3 +89,12 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --title "Codex ${{ steps.release.outputs.version }}" \
             --notes "Custom macOS arm64 build of upstream ${{ steps.release.outputs.upstream_tag }}."
+
+      - name: Remove build workspace
+        if: always()
+        run: |
+          rm -rf \
+            "$GITHUB_WORKSPACE/sources" \
+            "$GITHUB_WORKSPACE/dist" \
+            "$GITHUB_WORKSPACE/.cargo-home" \
+            "$GITHUB_WORKSPACE/.v8-cache"

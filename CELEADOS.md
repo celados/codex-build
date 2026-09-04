@@ -44,7 +44,8 @@ scripts restore temporary source rewrites even when compilation fails.
 ## Release gate
 
 The release workflow checks upstream once daily and supports a forceful manual
-dispatch. It runs on the persistent Mac mini, retains the Cargo target cache,
-caps its disk use, and publishes only from `main`. An unchanged upstream tag is
-a successful no-op; patch validation and builds run only for a new tag or an
-explicit forced rebuild.
+dispatch. It runs on the shared Mac mini, builds from a fresh upstream checkout,
+and removes `sources/`, `dist/`, `.cargo-home/`, and `.v8-cache/` after every
+attempt. It publishes only from `main`; an unchanged upstream tag is a
+successful no-op, while patch validation and builds run only for a new tag or
+an explicit forced rebuild.
