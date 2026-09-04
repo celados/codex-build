@@ -43,9 +43,11 @@ scripts restore temporary source rewrites even when compilation fails.
 
 ## Release gate
 
-The release workflow checks upstream weekly at 04:17 Sunday in Asia/Shanghai and supports a forceful manual
-dispatch. It runs on the shared Mac mini, builds from a fresh upstream checkout,
-and removes the project checkout, `sources/`, `dist/`, `.cargo-home/`, and
-`.v8-cache/` after every attempt. It publishes only from `main`; an unchanged
-upstream tag is a successful no-op, while patch validation and builds run only
-for a new tag or an explicit forced rebuild.
+The release workflow checks upstream daily at 04:17 in Asia/Shanghai and supports
+a forceful manual dispatch. It runs on the shared Mac mini and builds only the
+Apple Silicon macOS target from a fresh upstream checkout. The project checkout,
+`sources/`, and `dist/` are removed after every attempt; Cargo, target, and V8
+caches survive only under explicit size ceilings that are checked even on no-op
+runs. It publishes only from `main`; an unchanged upstream tag is a successful
+no-op, while patch validation and builds run only for a new tag or an explicit
+forced rebuild.

@@ -47,18 +47,19 @@ leaves a new codex next to an old host.
 
 ## Build policy
 
-macOS artifacts are checked weekly at 04:17 Sunday in Asia/Shanghai and built
-only when the latest stable upstream tag changes. They are built and smoke-tested
-on the Celados Apple Silicon Mac mini runners. Linux may perform source and patch
-checks, but is not a supported macOS cross-compilation environment. A manual
-workflow dispatch can force a rebuild of an already released upstream tag.
+macOS artifacts are checked daily at 04:17 in Asia/Shanghai and built only when
+the latest stable upstream tag changes. They are built and smoke-tested on the
+Celados Apple Silicon Mac mini runners. Apple Silicon macOS is the distribution's
+only supported build target. A manual workflow dispatch can force a rebuild of
+an already released upstream tag.
 
 Small upstream seams belong in `patches/`. Custom-build-owned modules live in
 `overlays/` and are copied into the disposable upstream checkout before those
 seams are applied. CI creates a fresh builder checkout and ignored `sources/`
-directory from the release tag on every run, then deletes the project workspace,
-Cargo output, Cargo home, and `.v8-cache/` after the attempt. The shared Mac
-mini intentionally keeps no Codex build checkout or cache.
+directory from the release tag on every run, then deletes that workspace after
+the attempt. Cargo downloads, V8 downloads, and release target artifacts use
+explicitly capped runner caches; daily no-op checks prune them as well, so reuse
+cannot turn into unbounded per-release generations.
 
 The code-mode host links V8. The `v8` crate's default prebuilts ship no
 sandbox-enabled aarch64-apple-darwin archive, so `scripts/fetch-v8.py` points

@@ -3,6 +3,7 @@ set -euo pipefail
 
 repo_dir="$(cd "$(dirname "$0")" && pwd)"
 source_dir="$repo_dir/sources"
+workspace_dir="$source_dir/codex-rs"
 upstream_ref=""
 version=""
 check_only=0
@@ -65,12 +66,26 @@ trap restore_sources EXIT
 python3 "$repo_dir/scripts/apply-patches.py" --source "$source_dir"
 python3 "$repo_dir/scripts/set-workspace-version.py" \
   "$source_dir/codex-rs/Cargo.toml" "${upstream_ref#rust-v}" "$version"
+if [[ -n "${CARGO_TARGET_DIR:-}" ]]; then
+  if [[ "$CARGO_TARGET_DIR" = /* ]]; then
+    cargo_target_dir="$CARGO_TARGET_DIR"
+  else
+    cargo_target_dir="$workspace_dir/$CARGO_TARGET_DIR"
+  fi
+else
+  cargo_target_dir="$workspace_dir/target"
+fi
+mkdir -p "$cargo_target_dir"
+cargo_target_dir="$(cd "$cargo_target_dir" && pwd)"
 # The v8 crate's default prebuilts carry no sandbox-enabled aarch64-apple-darwin
 # archive, so the code-mode host links Codex's own published pair instead.
+v8_cache_dir="${CODEX_BUILD_V8_CACHE_DIR:-$repo_dir/.v8-cache}"
+# The downloaded archives are reusable; the generated environment embeds build-local
+# paths and therefore stays with the disposable builder.
 v8_env="$repo_dir/.v8-cache/cargo-env"
 python3 "$repo_dir/scripts/fetch-v8.py" \
   --cargo-lock "$source_dir/codex-rs/Cargo.lock" \
-  --cache "$repo_dir/.v8-cache" \
+  --cache "$v8_cache_dir" \
   --target aarch64-apple-darwin \
   --output "$v8_env"
 
@@ -92,13 +107,13 @@ python3 "$repo_dir/scripts/fetch-v8.py" \
 )
 
 python3 "$repo_dir/scripts/check-mention.py" \
-  "$source_dir/codex-rs/target/aarch64-apple-darwin/release/codex-file-search"
+  "$cargo_target_dir/aarch64-apple-darwin/release/codex-file-search"
 
 mkdir -p "$repo_dir/dist"
 
 stage_binary() {
   local staged="$repo_dir/dist/$1-aarch64-apple-darwin"
-  cp "$source_dir/codex-rs/target/aarch64-apple-darwin/release/$1" "$staged"
+  cp "$cargo_target_dir/aarch64-apple-darwin/release/$1" "$staged"
   # Match upstream's macOS release staging so downloads do not carry debug symbols.
   strip -S -x "$staged"
   chmod 0755 "$staged"
