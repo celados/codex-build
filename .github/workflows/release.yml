@@ -28,9 +28,6 @@ jobs:
       CARGO_BUILD_JOBS: 6
       # Disk safety outranks build speed on the shared Mac mini runner.
       CARGO_INCREMENTAL: 0
-      # Keep Cargo's registry download cache inside the disposable job tree;
-      # ~/.cargo remains only the runner-owned rustup executable location.
-      CARGO_HOME: ${{ runner.temp }}/codex-builder/.cargo-home
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
       GH_TOKEN: ${{ github.token }}
@@ -42,6 +39,9 @@ jobs:
           rm -rf "$builder"
           git clone --depth=1 --filter=blob:none \
             "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$builder"
+          # Keep Cargo's registry cache inside this disposable job tree;
+          # ~/.cargo remains only the runner-owned rustup executable location.
+          echo "CARGO_HOME=$builder/.cargo-home" >> "$GITHUB_ENV"
           # A new main commit can race the schedule; build the exact run SHA.
           git -C "$builder" fetch --depth=1 origin "$GITHUB_SHA"
           git -C "$builder" checkout --detach FETCH_HEAD
