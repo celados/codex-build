@@ -52,10 +52,10 @@ rebuild of an already released upstream tag.
 
 Small upstream seams belong in `patches/`. Custom-build-owned modules live in
 `overlays/` and are copied into the disposable upstream checkout before those
-seams are applied. CI creates the ignored `sources/` directory from the release
-tag on every build and deletes it, its Cargo output, Cargo home, and
-`.v8-cache/` after the release attempt. The shared Mac mini intentionally keeps
-no Codex build cache.
+seams are applied. CI creates a fresh builder checkout and ignored `sources/`
+directory from the release tag on every run, then deletes the project workspace,
+Cargo output, Cargo home, and `.v8-cache/` after the attempt. The shared Mac
+mini intentionally keeps no Codex build checkout or cache.
 
 The code-mode host links V8. The `v8` crate's default prebuilts ship no
 sandbox-enabled aarch64-apple-darwin archive, so `scripts/fetch-v8.py` points

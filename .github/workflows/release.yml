@@ -93,8 +93,13 @@ jobs:
       - name: Remove build workspace
         if: always()
         run: |
+          # checkout's post step tolerates a missing repository and only warns;
+          # leave its cwd before removing the shared runner's project tree.
+          cd "$RUNNER_TEMP"
           rm -rf \
             "$GITHUB_WORKSPACE/sources" \
             "$GITHUB_WORKSPACE/dist" \
             "$GITHUB_WORKSPACE/.cargo-home" \
             "$GITHUB_WORKSPACE/.v8-cache"
+          rm -rf "$GITHUB_WORKSPACE"
+          rmdir "$(dirname "$GITHUB_WORKSPACE")" 2>/dev/null || true
