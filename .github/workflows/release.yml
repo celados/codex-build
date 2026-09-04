@@ -30,46 +30,51 @@ jobs:
       CARGO_INCREMENTAL: 0
       # Keep Cargo's registry download cache inside the disposable job tree;
       # ~/.cargo remains only the runner-owned rustup executable location.
-      CARGO_HOME: ${{ github.workspace }}/.cargo-home
+      CARGO_HOME: ${{ runner.temp }}/codex-builder/.cargo-home
       HOMEBREW_NO_AUTO_UPDATE: 1
       HOMEBREW_NO_INSTALL_CLEANUP: 1
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - name: Check out builder
-        uses: actions/checkout@v7
-        with:
-          # A cancelled or killed job can miss the explicit cleanup below.
-          # Checkout cleanup also bounds stale ignored artifacts to one run.
-          clean: true
-          fetch-depth: 1
-          persist-credentials: false
+      - name: Clone disposable builder
+        run: |
+          builder="$RUNNER_TEMP/codex-builder"
+          rm -rf "$builder"
+          git clone --depth=1 --filter=blob:none \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$builder"
+          # A new main commit can race the schedule; build the exact run SHA.
+          git -C "$builder" fetch --depth=1 origin "$GITHUB_SHA"
+          git -C "$builder" checkout --detach FETCH_HEAD
 
       - name: Resolve release versions
         id: release
+        working-directory: ${{ runner.temp }}/codex-builder
         env:
           FORCE_RELEASE: ${{ inputs.force_release || false }}
         run: python3 scripts/resolve-release.py
 
       - name: Prepare cold runner
         if: steps.release.outputs.release == 'true'
+        working-directory: ${{ runner.temp }}/codex-builder
         run: |
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           brew install ast-grep
-          # Build from a fresh upstream checkout every release. The runner is
-          # shared storage, so intentionally do not retain Cargo or V8 state.
-          rm -rf dist sources .cargo-home .v8-cache
+          # The builder is recreated for every run; no source or dependency
+          # state may survive on the shared runner.
 
       - name: Verify patch applicability
         if: steps.release.outputs.release == 'true'
+        working-directory: ${{ runner.temp }}/codex-builder
         run: ./build.sh --check --upstream-ref "${{ steps.release.outputs.upstream_tag }}"
 
       - name: Build and smoke-test
         if: steps.release.outputs.release == 'true'
+        working-directory: ${{ runner.temp }}/codex-builder
         run: ./build.sh --upstream-ref "${{ steps.release.outputs.upstream_tag }}" --version "${{ steps.release.outputs.version }}"
 
       - name: Write provenance
         if: steps.release.outputs.release == 'true'
+        working-directory: ${{ runner.temp }}/codex-builder
         run: |
           python3 scripts/write-provenance.py \
             --output dist/provenance.json \
@@ -81,6 +86,7 @@ jobs:
 
       - name: Publish release
         if: steps.release.outputs.release == 'true'
+        working-directory: ${{ runner.temp }}/codex-builder
         run: |
           gh release create "${{ steps.release.outputs.release_tag }}" \
             dist/codex-aarch64-apple-darwin.tar.gz \
@@ -93,13 +99,9 @@ jobs:
       - name: Remove build workspace
         if: always()
         run: |
-          # checkout's post step tolerates a missing repository and only warns;
-          # leave its cwd before removing the shared runner's project tree.
+          # No checkout action follows this step, so its workspace can be
+          # removed without breaking a post-action working directory.
           cd "$RUNNER_TEMP"
-          rm -rf \
-            "$GITHUB_WORKSPACE/sources" \
-            "$GITHUB_WORKSPACE/dist" \
-            "$GITHUB_WORKSPACE/.cargo-home" \
-            "$GITHUB_WORKSPACE/.v8-cache"
+          rm -rf "$RUNNER_TEMP/codex-builder"
           rm -rf "$GITHUB_WORKSPACE"
           rmdir "$(dirname "$GITHUB_WORKSPACE")" 2>/dev/null || true
