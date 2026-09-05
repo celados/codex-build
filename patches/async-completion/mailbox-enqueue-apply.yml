@@ -1,0 +1,63 @@
+id: enqueue-standalone-mailbox-output
+language: rust
+rule:
+  pattern: |
+    pub(crate) async fn enqueue_mailbox_communication(
+        &self,
+        communication: InterAgentCommunication,
+        start_options: TurnStartOptions,
+    ) {
+        self.mailbox_pending_mails
+            .lock()
+            .await
+            .push_back(PendingMailboxCommunication {
+                communication,
+                start_options,
+                _diagnostics_guard: PENDING_MAILBOX_MESSAGES.track(),
+            });
+        self.activity_tx.send_replace(InputQueueActivity::Mailbox);
+    }
+fix: |
+  pub(crate) async fn enqueue_mailbox_communication(
+      &self,
+      communication: InterAgentCommunication,
+      start_options: TurnStartOptions,
+  ) {
+      self.mailbox_pending_items
+          .lock()
+          .await
+          .push_back(PendingMailboxInput::InterAgent {
+              communication,
+              start_options,
+              _diagnostics_guard: PENDING_MAILBOX_MESSAGES.track(),
+          });
+      self.activity_tx.send_replace(InputQueueActivity::Mailbox);
+  }
+
+  pub(crate) async fn enqueue_standalone_output_once(
+      &self,
+      item: ResponseItem,
+      terminal_result_claimed: &std::sync::atomic::AtomicBool,
+  ) -> bool {
+      let mut pending = self.mailbox_pending_items.lock().await;
+      if terminal_result_claimed
+          .compare_exchange(
+              false,
+              true,
+              std::sync::atomic::Ordering::AcqRel,
+              std::sync::atomic::Ordering::Acquire,
+          )
+          .is_err()
+      {
+          return false;
+      }
+      pending.push_back(PendingMailboxInput::StandaloneOutput {
+              item,
+              _diagnostics_guard: PENDING_MAILBOX_MESSAGES.track(),
+          });
+      drop(pending);
+      // Standalone results share mailbox delivery so active turns consume them at a sampling
+      // boundary and idle sessions are woken by the same session scheduling path.
+      self.activity_tx.send_replace(InputQueueActivity::Mailbox);
+      true
+  }

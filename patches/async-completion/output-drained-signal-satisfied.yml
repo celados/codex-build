@@ -1,0 +1,9 @@
+id: has-durable-output-drained-signal
+language: rust
+rule:
+  pattern: |
+    pub(crate) struct UnifiedExecProcess {
+        $$$BEFORE
+        output_drained: CancellationToken,
+        $$$AFTER
+    }

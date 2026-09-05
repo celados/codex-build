@@ -1,0 +1,4 @@
+id: has-async-completion-session-module
+language: rust
+rule:
+  pattern: pub(crate) mod async_completion;

@@ -1,0 +1,13 @@
+id: generalize-mailbox-storage
+language: rust
+rule:
+  pattern: |
+    pub(crate) struct InputQueue {
+        activity_tx: watch::Sender<InputQueueActivity>,
+        mailbox_pending_mails: Mutex<VecDeque<PendingMailboxCommunication>>,
+    }
+fix: |
+  pub(crate) struct InputQueue {
+      activity_tx: watch::Sender<InputQueueActivity>,
+      mailbox_pending_items: Mutex<VecDeque<PendingMailboxInput>>,
+  }

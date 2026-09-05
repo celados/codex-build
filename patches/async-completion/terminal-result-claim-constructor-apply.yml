@@ -1,0 +1,22 @@
+id: construct-terminal-result-claim
+language: rust
+rule:
+  all:
+    - pattern: |
+        Self {
+            $$$BEFORE
+            interaction_lock: Arc::new(Mutex::new(())),
+            $$$AFTER
+        }
+    - not:
+        regex: terminal_result_claimed
+  inside:
+    pattern: impl UnifiedExecProcess { $$$BODY }
+    stopBy: end
+fix: |
+  Self {
+      $$$BEFORE
+      interaction_lock: Arc::new(Mutex::new(())),
+      terminal_result_claimed: AtomicBool::new(false),
+      $$$AFTER
+  }

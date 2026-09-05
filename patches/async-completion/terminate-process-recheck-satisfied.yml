@@ -1,0 +1,13 @@
+id: rechecks-process-exit-after-serialization
+language: rust
+rule:
+  pattern: |
+    if !$PROCESS.has_exited() && $PROCESS.terminate_confirmed().await.is_err() {
+        return false;
+    }
+  inside:
+    pattern: |
+      pub(crate) async fn terminate_process(&self, $PROCESS_ID: i32) -> bool {
+          $$$BODY
+      }
+    stopBy: end

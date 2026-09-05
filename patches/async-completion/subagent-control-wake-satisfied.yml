@@ -1,0 +1,14 @@
+id: parent-wakes-from-control-completion
+language: rust
+rule:
+  pattern: |
+    InterAgentCommunication::new(
+        $CHILD,
+        $PARENT,
+        Vec::new(),
+        $MESSAGE,
+        /*trigger_turn*/ true,
+    )
+  inside:
+    pattern: fn maybe_start_completion_watcher($$$PARAMS) { $$$BODY }
+    stopBy: end

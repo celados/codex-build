@@ -1,0 +1,15 @@
+id: make-output-drained-a-durable-signal
+language: rust
+rule:
+  pattern: |
+    pub(crate) struct UnifiedExecProcess {
+        $$$BEFORE
+        output_drained: Arc<Notify>,
+        $$$AFTER
+    }
+fix: |
+  pub(crate) struct UnifiedExecProcess {
+      $$$BEFORE
+      output_drained: CancellationToken,
+      $$$AFTER
+  }

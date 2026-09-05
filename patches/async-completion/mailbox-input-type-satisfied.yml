@@ -1,0 +1,12 @@
+id: has-generalized-mailbox-input-type
+language: rust
+rule:
+  pattern: |
+    enum PendingMailboxInput {
+        $$$BEFORE
+        StandaloneOutput {
+            item: ResponseItem,
+            _diagnostics_guard: GaugeGuard,
+        },
+        $$$AFTER
+    }

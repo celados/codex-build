@@ -1,0 +1,19 @@
+id: add-terminal-result-claim-field
+language: rust
+rule:
+  all:
+    - pattern: |
+        pub(crate) struct UnifiedExecProcess {
+            $$$BEFORE
+            interaction_lock: Arc<Mutex<()>>,
+            $$$AFTER
+        }
+    - not:
+        regex: terminal_result_claimed
+fix: |
+  pub(crate) struct UnifiedExecProcess {
+      $$$BEFORE
+      interaction_lock: Arc<Mutex<()>>,
+      terminal_result_claimed: AtomicBool,
+      $$$AFTER
+  }

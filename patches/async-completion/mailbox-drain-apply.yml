@@ -1,0 +1,71 @@
+id: drain-generalized-mailbox-input
+language: rust
+rule:
+  pattern: |
+    pub(crate) async fn drain_mailbox_input_items(&self) -> (Vec<TurnInput>, TurnStartOptions) {
+        let $PENDING = self
+            .mailbox_pending_mails
+            .lock()
+            .await
+            .drain(..)
+            .collect::<Vec<_>>();
+        $$$BODY
+        let $ITEMS = $PENDING
+            .into_iter()
+            .map(|$MAIL| TurnInput::InterAgentCommunication($MAIL.communication))
+            .collect();
+        ($ITEMS, $START_OPTIONS)
+    }
+fix: |
+  pub(crate) async fn drain_mailbox_input_items(&self) -> (Vec<TurnInput>, TurnStartOptions) {
+      let $PENDING = self
+          .mailbox_pending_items
+          .lock()
+          .await
+          .drain(..)
+          .collect::<Vec<_>>();
+      let mut mailbox_communications = $PENDING.iter().filter_map(|item| match item {
+          PendingMailboxInput::InterAgent {
+              communication,
+              start_options,
+              ..
+          } => Some((communication, start_options)),
+          PendingMailboxInput::StandaloneOutput { .. } => None,
+      });
+      // A later follow-up supersedes the earlier choice, including an omitted choice.
+      let mut $START_OPTIONS = mailbox_communications
+          .clone()
+          .rev()
+          .find(|(communication, _)| communication.trigger_turn)
+          .map(|(_, start_options)| start_options.clone())
+          .unwrap_or_default();
+      $START_OPTIONS.parent_turn_id = mailbox_communications
+          .clone()
+          .filter(|(communication, _)| communication.trigger_turn)
+          .map(|(_, start_options)| start_options.parent_turn_id.as_deref())
+          .reduce(|expected, candidate| expected.filter(|id| candidate == Some(*id)))
+          .and_then(|id| id.filter(|id| !id.trim().is_empty()).map(str::to_string));
+      $START_OPTIONS.root_turn_id = mailbox_communications
+          .find(|(communication, _)| communication.trigger_turn)
+          .and_then(|(_, start_options)| {
+              start_options
+                  .parent_turn_id
+                  .as_deref()
+                  .filter(|id| !id.trim().is_empty())
+                  .and(start_options.root_turn_id.as_deref())
+                  .filter(|id| !id.trim().is_empty())
+          })
+          .map(str::to_string);
+      let $ITEMS = $PENDING
+          .into_iter()
+          .map(|item| match item {
+              PendingMailboxInput::InterAgent { communication, .. } => {
+                  TurnInput::InterAgentCommunication(communication)
+              }
+              PendingMailboxInput::StandaloneOutput { item, .. } => {
+                  TurnInput::FunctionCallOutput(item)
+              }
+          })
+          .collect();
+      ($ITEMS, $START_OPTIONS)
+  }

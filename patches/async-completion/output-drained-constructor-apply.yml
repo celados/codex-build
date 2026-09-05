@@ -1,0 +1,5 @@
+id: construct-durable-output-drained-signal
+language: rust
+rule:
+  pattern: let $OUTPUT_DRAINED = Arc::new(Notify::new());
+fix: let $OUTPUT_DRAINED = CancellationToken::new();

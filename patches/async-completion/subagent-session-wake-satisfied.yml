@@ -1,0 +1,14 @@
+id: parent-wakes-from-session-completion
+language: rust
+rule:
+  pattern: |
+    InterAgentCommunication::new(
+        $CHILD,
+        $PARENT,
+        Vec::new(),
+        $MESSAGE,
+        /*trigger_turn*/ true,
+    )
+  inside:
+    pattern: async fn forward_child_completion_to_parent($$$PARAMS) { $$$BODY }
+    stopBy: end

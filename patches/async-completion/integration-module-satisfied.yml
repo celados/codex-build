@@ -1,0 +1,4 @@
+id: has-async-completion-integration-module
+language: rust
+rule:
+  pattern: mod async_completion;

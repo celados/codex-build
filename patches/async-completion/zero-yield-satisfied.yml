@@ -1,0 +1,9 @@
+id: allows-immediate-exec-yield
+language: rust
+rule:
+  pattern: |
+    let $YIELD_TIME_MS = if $REQUEST.yield_time_ms == 0 {
+        0
+    } else {
+        clamp_yield_time($REQUEST.yield_time_ms)
+    };

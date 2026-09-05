@@ -1,0 +1,13 @@
+id: initialize-generalized-mailbox-storage
+language: rust
+rule:
+  pattern: |
+    Self {
+        activity_tx,
+        mailbox_pending_mails: Mutex::new(VecDeque::new()),
+    }
+fix: |
+  Self {
+      activity_tx,
+      mailbox_pending_items: Mutex::new(VecDeque::new()),
+  }

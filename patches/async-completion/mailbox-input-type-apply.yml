@@ -1,0 +1,21 @@
+id: generalize-mailbox-input-type
+language: rust
+rule:
+  pattern: |
+    struct PendingMailboxCommunication {
+        communication: InterAgentCommunication,
+        start_options: TurnStartOptions,
+        _diagnostics_guard: GaugeGuard,
+    }
+fix: |
+  enum PendingMailboxInput {
+      InterAgent {
+          communication: InterAgentCommunication,
+          start_options: TurnStartOptions,
+          _diagnostics_guard: GaugeGuard,
+      },
+      StandaloneOutput {
+          item: ResponseItem,
+          _diagnostics_guard: GaugeGuard,
+      },
+  }

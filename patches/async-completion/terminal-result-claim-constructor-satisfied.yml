@@ -1,0 +1,12 @@
+id: constructs-terminal-result-claim
+language: rust
+rule:
+  pattern: |
+    Self {
+        $$$BEFORE
+        terminal_result_claimed: AtomicBool::new(false),
+        $$$AFTER
+    }
+  inside:
+    pattern: impl UnifiedExecProcess { $$$BODY }
+    stopBy: end

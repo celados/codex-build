@@ -1,0 +1,10 @@
+id: release-claims-terminal-result
+language: rust
+rule:
+  pattern: $ENTRY.process.claim_terminal_result()
+  inside:
+    pattern: |
+      pub(crate) async fn release_process_id(&self, $PROCESS_ID: i32) {
+          $$$BODY
+      }
+    stopBy: end

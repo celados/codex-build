@@ -1,0 +1,11 @@
+id: check-generalized-mailbox-storage
+language: rust
+rule:
+  pattern: |
+    pub(crate) async fn has_pending_mailbox_items(&self) -> bool {
+        !self.mailbox_pending_mails.lock().await.is_empty()
+    }
+fix: |
+  pub(crate) async fn has_pending_mailbox_items(&self) -> bool {
+      !self.mailbox_pending_items.lock().await.is_empty()
+  }

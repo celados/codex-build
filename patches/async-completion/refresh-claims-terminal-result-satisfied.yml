@@ -1,0 +1,13 @@
+id: refresh-claims-terminal-result
+language: rust
+rule:
+  pattern: |
+    if !$ENTRY.process.claim_terminal_result() {
+        return ProcessStatus::Unknown;
+    }
+  inside:
+    pattern: |
+      async fn refresh_process_state(&self, $PROCESS_ID: i32) -> ProcessStatus {
+          $$$BODY
+      }
+    stopBy: end

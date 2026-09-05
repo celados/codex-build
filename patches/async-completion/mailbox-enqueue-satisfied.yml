@@ -1,0 +1,11 @@
+id: has-standalone-mailbox-output
+language: rust
+rule:
+  pattern: |
+    pub(crate) async fn enqueue_standalone_output_once(
+        &self,
+        $ITEM: ResponseItem,
+        $CLAIM: &std::sync::atomic::AtomicBool,
+    ) -> bool {
+        $$$BODY
+    }

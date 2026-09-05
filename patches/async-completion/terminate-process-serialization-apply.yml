@@ -1,0 +1,29 @@
+id: serialize-terminal-termination
+language: rust
+rule:
+  pattern: |
+    let ($PROCESS, $ALREADY_EXITED) = {
+        let $STORE = self.process_store.lock().await;
+        let Some($ENTRY) = $STORE.processes.get(&$PROCESS_ID) else {
+            return false;
+        };
+        (Arc::clone(&$ENTRY.process), $ENTRY.process.has_exited())
+    };
+  inside:
+    pattern: |
+      pub(crate) async fn terminate_process(&self, $PROCESS_ID_PARAM: i32) -> bool {
+          $$$BODY
+      }
+    stopBy: end
+fix: |
+  let $PROCESS = {
+      let $STORE = self.process_store.lock().await;
+      let Some($ENTRY) = $STORE.processes.get(&$PROCESS_ID) else {
+          return false;
+      };
+      Arc::clone(&$ENTRY.process)
+  };
+
+  // Serialize explicit termination with write_stdin and completion delivery so only one path
+  // can publish terminal state.
+  let _interaction_guard = $PROCESS.interaction_lock().lock_owned().await;

@@ -1,0 +1,18 @@
+id: claim-terminal-result-on-release
+language: rust
+rule:
+  pattern: |
+    if let Some($ENTRY) = $REMOVED {
+        unregister_network_approval_for_entry(&$ENTRY).await;
+    }
+  inside:
+    pattern: |
+      pub(crate) async fn release_process_id(&self, $PROCESS_ID: i32) {
+          $$$BODY
+      }
+    stopBy: end
+fix: |
+  if let Some($ENTRY) = $REMOVED {
+      $ENTRY.process.claim_terminal_result();
+      unregister_network_approval_for_entry(&$ENTRY).await;
+  }

@@ -1,0 +1,9 @@
+id: exposes-network-finish-to-completion
+language: rust
+rule:
+  pattern: |
+    pub(super) async fn finish_deferred_network_approval_after_process_exit_for_session(
+        $$$PARAMS
+    ) -> Result<(), String> {
+        $$$BODY
+    }

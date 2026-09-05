@@ -1,0 +1,17 @@
+id: drains-generalized-mailbox-input
+language: rust
+rule:
+  pattern: |
+    pub(crate) async fn drain_mailbox_input_items(&self) -> (Vec<TurnInput>, TurnStartOptions) {
+        $$$BEFORE
+        let $ITEMS = $PENDING
+            .into_iter()
+            .map(|$ITEM| match $ITEM {
+                $$$ARMS
+                PendingMailboxInput::StandaloneOutput { item, .. } => {
+                    TurnInput::FunctionCallOutput(item)
+                }
+            })
+            .collect();
+        $$$AFTER
+    }

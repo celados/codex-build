@@ -1,0 +1,13 @@
+id: session-close-claims-terminal-results
+language: rust
+rule:
+  pattern: |
+    for $ENTRY in &$ENTRIES {
+        $ENTRY.process.claim_terminal_result();
+    }
+  inside:
+    pattern: |
+      pub(crate) async fn terminate_all_processes(&self) {
+          $$$BODY
+      }
+    stopBy: end

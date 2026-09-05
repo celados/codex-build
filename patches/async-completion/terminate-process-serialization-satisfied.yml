@@ -1,0 +1,10 @@
+id: serializes-terminal-termination
+language: rust
+rule:
+  pattern: let $GUARD = $PROCESS.interaction_lock().lock_owned().await
+  inside:
+    pattern: |
+      pub(crate) async fn terminate_process(&self, $PROCESS_ID: i32) -> bool {
+          $$$BODY
+      }
+    stopBy: end

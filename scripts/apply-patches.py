@@ -29,12 +29,6 @@ class Overlay:
     destination: str
 
 
-@dataclass(frozen=True)
-class DiffPatch:
-    name: str
-    source: str
-
-
 OVERLAYS = (
     Overlay(
         "selection accessory module",
@@ -52,27 +46,24 @@ OVERLAYS = (
         "codex-rs/tui/src/chatwidget/custom_model_picker.rs",
     ),
     Overlay(
-        "background completion module",
-        "overlays/codex-rs/core/src/session/background_completion.rs",
-        "codex-rs/core/src/session/background_completion.rs",
+        "async completion module",
+        "overlays/codex-rs/core/src/session/async_completion.rs",
+        "codex-rs/core/src/session/async_completion.rs",
     ),
     Overlay(
-        "background completion unit tests",
-        "overlays/codex-rs/core/src/session/background_completion_tests.rs",
-        "codex-rs/core/src/session/background_completion_tests.rs",
+        "async completion unit tests",
+        "overlays/codex-rs/core/src/session/async_completion_tests.rs",
+        "codex-rs/core/src/session/async_completion_tests.rs",
     ),
     Overlay(
-        "background completion integration test",
-        "overlays/codex-rs/core/tests/suite/background_completion.rs",
-        "codex-rs/core/tests/suite/background_completion.rs",
+        "async completion integration test",
+        "overlays/codex-rs/core/tests/suite/async_completion.rs",
+        "codex-rs/core/tests/suite/async_completion.rs",
     ),
-)
-
-
-DIFF_PATCHES = (
-    DiffPatch(
-        "background process completion wake-up",
-        "patches/background-completion/core.patch",
+    Overlay(
+        "unified exec background completion",
+        "overlays/codex-rs/core/src/unified_exec/background_completion.rs",
+        "codex-rs/core/src/unified_exec/background_completion.rs",
     ),
 )
 
@@ -83,6 +74,36 @@ PATCHES = (
     Patch("standalone installer", "codex-rs/tui/src/update_action.rs", "patches/update-channel/installer-apply.yml", "patches/update-channel/installer-satisfied.yml", 2),
     Patch("standalone update action", "codex-rs/tui/src/update_action.rs", "patches/update-channel/action-apply.yml", "patches/update-channel/action-satisfied.yml"),
     Patch("Computer Use MCP", "codex-rs/core/src/config/mod.rs", "patches/computer-use/apply.yml", "patches/computer-use/satisfied.yml"),
+    Patch("async completion session module", "codex-rs/core/src/session/mod.rs", "patches/async-completion/session-module-apply.yml", "patches/async-completion/session-module-satisfied.yml"),
+    Patch("generalized mailbox storage", "codex-rs/core/src/session/input_queue.rs", "patches/async-completion/mailbox-storage-apply.yml", "patches/async-completion/mailbox-storage-satisfied.yml"),
+    Patch("generalized mailbox input type", "codex-rs/core/src/session/input_queue.rs", "patches/async-completion/mailbox-input-type-apply.yml", "patches/async-completion/mailbox-input-type-satisfied.yml"),
+    Patch("generalized mailbox constructor", "codex-rs/core/src/session/input_queue.rs", "patches/async-completion/mailbox-constructor-apply.yml", "patches/async-completion/mailbox-constructor-satisfied.yml"),
+    Patch("standalone mailbox enqueue", "codex-rs/core/src/session/input_queue.rs", "patches/async-completion/mailbox-enqueue-apply.yml", "patches/async-completion/mailbox-enqueue-satisfied.yml"),
+    Patch("generalized mailbox pending check", "codex-rs/core/src/session/input_queue.rs", "patches/async-completion/mailbox-pending-apply.yml", "patches/async-completion/mailbox-pending-satisfied.yml"),
+    Patch("standalone mailbox wake-up", "codex-rs/core/src/session/input_queue.rs", "patches/async-completion/mailbox-trigger-apply.yml", "patches/async-completion/mailbox-trigger-satisfied.yml"),
+    Patch("generalized mailbox drain", "codex-rs/core/src/session/input_queue.rs", "patches/async-completion/mailbox-drain-apply.yml", "patches/async-completion/mailbox-drain-satisfied.yml"),
+    Patch("subagent control completion wake-up", "codex-rs/core/src/agent/control.rs", "patches/async-completion/subagent-control-wake-apply.yml", "patches/async-completion/subagent-control-wake-satisfied.yml"),
+    Patch("subagent session completion wake-up", "codex-rs/core/src/session/mod.rs", "patches/async-completion/subagent-session-wake-apply.yml", "patches/async-completion/subagent-session-wake-satisfied.yml"),
+    Patch("subagent completion test expectation", "codex-rs/core/src/agent/control_tests.rs", "patches/async-completion/subagent-control-tests-apply.yml", "patches/async-completion/subagent-control-tests-satisfied.yml"),
+    Patch("unified exec background completion module", "codex-rs/core/src/unified_exec/mod.rs", "patches/async-completion/unified-exec-module-apply.yml", "patches/async-completion/unified-exec-module-satisfied.yml"),
+    Patch("durable output-drained signal", "codex-rs/core/src/unified_exec/process.rs", "patches/async-completion/output-drained-signal-apply.yml", "patches/async-completion/output-drained-signal-satisfied.yml"),
+    Patch("durable output-drained construction", "codex-rs/core/src/unified_exec/process.rs", "patches/async-completion/output-drained-constructor-apply.yml", "patches/async-completion/output-drained-constructor-satisfied.yml"),
+    Patch("durable output-drained accessor", "codex-rs/core/src/unified_exec/process.rs", "patches/async-completion/output-drained-accessor-apply.yml", "patches/async-completion/output-drained-accessor-satisfied.yml"),
+    Patch("terminal-result claim field", "codex-rs/core/src/unified_exec/process.rs", "patches/async-completion/terminal-result-claim-field-apply.yml", "patches/async-completion/terminal-result-claim-field-satisfied.yml"),
+    Patch("terminal-result claim construction", "codex-rs/core/src/unified_exec/process.rs", "patches/async-completion/terminal-result-claim-constructor-apply.yml", "patches/async-completion/terminal-result-claim-constructor-satisfied.yml"),
+    Patch("terminal-result claim accessors", "codex-rs/core/src/unified_exec/process.rs", "patches/async-completion/terminal-result-claim-accessors-apply.yml", "patches/async-completion/terminal-result-claim-accessors-satisfied.yml"),
+    Patch("durable output-drained completion", "codex-rs/core/src/unified_exec/async_watcher.rs", "patches/async-completion/output-drained-complete-apply.yml", "patches/async-completion/output-drained-complete-satisfied.yml"),
+    Patch("durable output-drained wait", "codex-rs/core/src/unified_exec/async_watcher.rs", "patches/async-completion/output-drained-wait-apply.yml", "patches/async-completion/output-drained-wait-satisfied.yml"),
+    Patch("durable output-drained test waits", "codex-rs/core/src/unified_exec/async_watcher_tests.rs", "patches/async-completion/output-drained-tests-apply.yml", "patches/async-completion/output-drained-tests-satisfied.yml", 3),
+    Patch("network completion finalizer access", "codex-rs/core/src/unified_exec/process_manager.rs", "patches/async-completion/network-finish-visibility-apply.yml", "patches/async-completion/network-finish-visibility-satisfied.yml"),
+    Patch("released terminal-result claim", "codex-rs/core/src/unified_exec/process_manager.rs", "patches/async-completion/release-claims-terminal-result-apply.yml", "patches/async-completion/release-claims-terminal-result-satisfied.yml"),
+    Patch("refreshed terminal-result claim", "codex-rs/core/src/unified_exec/process_manager.rs", "patches/async-completion/refresh-claims-terminal-result-apply.yml", "patches/async-completion/refresh-claims-terminal-result-satisfied.yml"),
+    Patch("session-close terminal-result claim", "codex-rs/core/src/unified_exec/process_manager.rs", "patches/async-completion/terminate-all-claims-terminal-results-apply.yml", "patches/async-completion/terminate-all-claims-terminal-results-satisfied.yml"),
+    Patch("serialized process termination", "codex-rs/core/src/unified_exec/process_manager.rs", "patches/async-completion/terminate-process-serialization-apply.yml", "patches/async-completion/terminate-process-serialization-satisfied.yml"),
+    Patch("serialized process exit recheck", "codex-rs/core/src/unified_exec/process_manager.rs", "patches/async-completion/terminate-process-recheck-apply.yml", "patches/async-completion/terminate-process-recheck-satisfied.yml"),
+    Patch("immediate exec yield", "codex-rs/core/src/unified_exec/process_manager.rs", "patches/async-completion/zero-yield-apply.yml", "patches/async-completion/zero-yield-satisfied.yml"),
+    Patch("spawn exec completion", "codex-rs/core/src/unified_exec/process_manager.rs", "patches/async-completion/spawn-exec-completion-apply.yml", "patches/async-completion/spawn-exec-completion-satisfied.yml"),
+    Patch("async completion integration module", "codex-rs/core/tests/suite/mod.rs", "patches/async-completion/integration-module-apply.yml", "patches/async-completion/integration-module-satisfied.yml"),
     Patch("model picker config action", "codex-rs/config/src/tui_keymap.rs", "patches/model-picker/config-apply.yml", "patches/model-picker/config-satisfied.yml"),
     Patch("model picker runtime field", "codex-rs/tui/src/keymap.rs", "patches/model-picker/runtime-field-apply.yml", "patches/model-picker/runtime-field-satisfied.yml"),
     Patch("model picker runtime resolution", "codex-rs/tui/src/keymap.rs", "patches/model-picker/runtime-resolution-apply.yml", "patches/model-picker/runtime-resolution-satisfied.yml"),
@@ -115,20 +136,6 @@ def matches(repo: Path, rule: Path, source: Path) -> int:
         text=True,
     )
     return len(json.loads(result.stdout))
-
-
-def diff_applies(source_root: Path, patch: Path, *, reverse: bool = False) -> bool:
-    command = ["git", "apply", "--check"]
-    if reverse:
-        command.append("--reverse")
-    command.append(str(patch))
-    return subprocess.run(
-        command,
-        cwd=source_root,
-        check=False,
-        capture_output=True,
-        text=True,
-    ).returncode == 0
 
 
 def main() -> None:
@@ -169,34 +176,6 @@ def main() -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
         print(f"applied: {overlay.name}")
-
-    for diff_patch in DIFF_PATCHES:
-        patch = repo / diff_patch.source
-        applicable = diff_applies(source_root, patch)
-        satisfied = diff_applies(source_root, patch, reverse=True)
-
-        if satisfied and not applicable:
-            print(f"satisfied: {diff_patch.name}")
-            continue
-        if applicable == satisfied:
-            raise SystemExit(
-                f"unknown upstream drift for {diff_patch.name}: "
-                f"applicable={applicable}, satisfied={satisfied}"
-            )
-        if args.check:
-            print(f"applicable: {diff_patch.name}")
-            continue
-
-        subprocess.run(
-            ["git", "apply", str(patch)],
-            cwd=source_root,
-            check=True,
-        )
-        if not diff_applies(source_root, patch, reverse=True):
-            raise SystemExit(
-                f"patch did not reach its postcondition: {diff_patch.name}"
-            )
-        print(f"applied: {diff_patch.name}")
 
     for patch in PATCHES:
         apply_rule = repo / patch.apply_rule

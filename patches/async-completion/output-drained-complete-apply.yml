@@ -1,0 +1,8 @@
+id: complete-durable-output-drained-signal
+language: rust
+rule:
+  pattern: $OUTPUT_DRAINED.notify_one()
+fix: $OUTPUT_DRAINED.cancel()
+constraints:
+  OUTPUT_DRAINED:
+    regex: ^output_drained$

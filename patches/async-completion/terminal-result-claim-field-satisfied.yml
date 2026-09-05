@@ -1,0 +1,9 @@
+id: has-terminal-result-claim-field
+language: rust
+rule:
+  pattern: |
+    pub(crate) struct UnifiedExecProcess {
+        $$$BEFORE
+        terminal_result_claimed: AtomicBool,
+        $$$AFTER
+    }

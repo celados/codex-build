@@ -1,0 +1,33 @@
+id: expose-terminal-result-claim
+language: rust
+rule:
+  all:
+    - pattern: |
+        pub(super) fn interaction_lock(&self) -> Arc<Mutex<()>> {
+            Arc::clone(&self.interaction_lock)
+        }
+    - not:
+        precedes:
+          pattern: |
+            pub(super) fn claim_terminal_result(&self) -> bool {
+                $$$BODY
+            }
+          stopBy: end
+fix: |
+  pub(super) fn interaction_lock(&self) -> Arc<Mutex<()>> {
+      Arc::clone(&self.interaction_lock)
+  }
+
+  pub(super) fn terminal_result_claim(&self) -> &AtomicBool {
+      &self.terminal_result_claimed
+  }
+
+  pub(super) fn terminal_result_claimed(&self) -> bool {
+      self.terminal_result_claimed.load(Ordering::Acquire)
+  }
+
+  pub(super) fn claim_terminal_result(&self) -> bool {
+      self.terminal_result_claimed
+          .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+          .is_ok()
+  }

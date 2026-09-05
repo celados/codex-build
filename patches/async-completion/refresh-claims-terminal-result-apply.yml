@@ -1,0 +1,36 @@
+id: claim-terminal-result-on-refresh
+language: rust
+rule:
+  pattern: |
+    if entry.process.has_exited() {
+        let Some(entry) = store.remove(process_id) else {
+            return ProcessStatus::Unknown;
+        };
+        ProcessStatus::Exited {
+            exit_code,
+            entry: Box::new(entry),
+        }
+    } else {
+        $$$ALIVE
+    }
+  inside:
+    pattern: |
+      async fn refresh_process_state(&self, process_id: i32) -> ProcessStatus {
+          $$$BODY
+      }
+    stopBy: end
+fix: |
+  if entry.process.has_exited() {
+      if !entry.process.claim_terminal_result() {
+          return ProcessStatus::Unknown;
+      }
+      let Some(entry) = store.remove(process_id) else {
+          return ProcessStatus::Unknown;
+      };
+      ProcessStatus::Exited {
+          exit_code,
+          entry: Box::new(entry),
+      }
+  } else {
+      $$$ALIVE
+  }

@@ -1,0 +1,35 @@
+id: suppress-completion-when-closing-session
+language: rust
+rule:
+  all:
+    - pattern: |
+        for $ENTRY in $ENTRIES {
+            unregister_network_approval_for_entry(&$ENTRY).await;
+            $ENTRY.process.terminate();
+        }
+    - not:
+        inside:
+          pattern: |
+            pub(crate) async fn terminate_all_processes(&self) {
+                $$$BEFORE
+                for $CLAIM_ENTRY in &$CLAIM_ENTRIES {
+                    $CLAIM_ENTRY.process.claim_terminal_result();
+                }
+                $$$AFTER
+            }
+          stopBy: end
+  inside:
+    pattern: |
+      pub(crate) async fn terminate_all_processes(&self) {
+          $$$BODY
+      }
+    stopBy: end
+fix: |
+  // Claim every result before the first await so no later entry can wake a closing session.
+  for $ENTRY in &$ENTRIES {
+      $ENTRY.process.claim_terminal_result();
+  }
+  for $ENTRY in $ENTRIES {
+      unregister_network_approval_for_entry(&$ENTRY).await;
+      $ENTRY.process.terminate();
+  }

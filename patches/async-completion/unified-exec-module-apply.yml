@@ -1,0 +1,12 @@
+id: add-background-completion-module
+language: rust
+rule:
+  all:
+    - pattern: mod async_watcher;
+    - not:
+        precedes:
+          pattern: mod background_completion;
+          stopBy: end
+fix: |-
+  mod async_watcher;
+  mod background_completion;

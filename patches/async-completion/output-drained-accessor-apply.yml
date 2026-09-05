@@ -1,0 +1,11 @@
+id: expose-durable-output-drained-signal
+language: rust
+rule:
+  pattern: |
+    pub(super) fn output_drained_notify(&self) -> Arc<Notify> {
+        Arc::clone(&self.output_drained)
+    }
+fix: |
+  pub(super) fn output_drained_notify(&self) -> CancellationToken {
+      self.output_drained.clone()
+  }

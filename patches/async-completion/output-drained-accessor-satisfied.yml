@@ -1,0 +1,7 @@
+id: exposes-durable-output-drained-signal
+language: rust
+rule:
+  pattern: |
+    pub(super) fn output_drained_notify(&self) -> CancellationToken {
+        self.output_drained.clone()
+    }

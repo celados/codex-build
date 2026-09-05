@@ -1,0 +1,4 @@
+id: has-background-completion-module
+language: rust
+rule:
+  pattern: mod background_completion;

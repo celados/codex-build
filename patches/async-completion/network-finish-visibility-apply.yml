@@ -1,0 +1,17 @@
+id: expose-network-finish-to-completion
+language: rust
+rule:
+  pattern: |
+    async fn finish_deferred_network_approval_after_process_exit_for_session(
+        $SESSION: Option<&Arc<crate::session::session::Session>>,
+        $DEFERRED: Option<DeferredNetworkApproval>,
+    ) -> Result<(), String> {
+        $$$BODY
+    }
+fix: |
+  pub(super) async fn finish_deferred_network_approval_after_process_exit_for_session(
+      $SESSION: Option<&Arc<crate::session::session::Session>>,
+      $DEFERRED: Option<DeferredNetworkApproval>,
+  ) -> Result<(), String> {
+      $$$BODY
+  }

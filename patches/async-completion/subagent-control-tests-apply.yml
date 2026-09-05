@@ -1,0 +1,22 @@
+id: update-subagent-control-completion-tests
+language: rust
+rule:
+  pattern: |
+    InterAgentCommunication::new(
+        $CHILD,
+        $PARENT,
+        Vec::new(),
+        $MESSAGE,
+        /*trigger_turn*/ false,
+    )
+  inside:
+    pattern: async fn multi_agent_v2_completion_queues_message_for_direct_parent() { $$$BODY }
+    stopBy: end
+fix: |
+  InterAgentCommunication::new(
+      $CHILD,
+      $PARENT,
+      Vec::new(),
+      $MESSAGE,
+      /*trigger_turn*/ true,
+  )

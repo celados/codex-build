@@ -1,0 +1,7 @@
+id: exposes-terminal-result-claim
+language: rust
+rule:
+  pattern: |
+    pub(super) fn claim_terminal_result(&self) -> bool {
+        $$$BODY
+    }

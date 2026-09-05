@@ -1,0 +1,10 @@
+id: completes-durable-output-drained-signal
+language: rust
+rule:
+  pattern: $OUTPUT_DRAINED.cancel()
+  inside:
+    pattern: pub(crate) fn start_streaming_output($$$PARAMS) { $$$BODY }
+    stopBy: end
+constraints:
+  OUTPUT_DRAINED:
+    regex: ^output_drained$

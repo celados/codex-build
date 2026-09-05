@@ -1,0 +1,39 @@
+id: spawn-yielded-exec-completion
+language: rust
+rule:
+  pattern: |
+    pub(super) async fn exec_command_inner(
+        &self,
+        request: ExecCommandRequest,
+        context: &UnifiedExecContext,
+        mut completion: Option<&mut Completion<'_>>,
+    ) -> Result<ExecCommandToolOutput, UnifiedExecError> {
+        $$$BEFORE
+        let $RESPONSE = ExecCommandToolOutput {
+            $$$FIELDS
+        };
+        Ok($RESPONSE)
+    }
+fix: |
+  pub(super) async fn exec_command_inner(
+      &self,
+      request: ExecCommandRequest,
+      context: &UnifiedExecContext,
+      mut completion: Option<&mut Completion<'_>>,
+  ) -> Result<ExecCommandToolOutput, UnifiedExecError> {
+      $$$BEFORE
+      let $RESPONSE = ExecCommandToolOutput {
+          $$$FIELDS
+      };
+      if $RESPONSE.process_id.is_some() {
+          super::background_completion::spawn_background_completion(
+              Arc::clone(&context.session),
+              Arc::clone(&process),
+              process_id,
+              request.hook_command.clone(),
+              Arc::clone(&transcript),
+              deferred_network_approval,
+          );
+      }
+      Ok($RESPONSE)
+  }

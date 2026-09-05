@@ -1,0 +1,10 @@
+id: awaits-durable-output-drained-signal
+language: rust
+rule:
+  pattern: $OUTPUT_DRAINED.cancelled().await
+  inside:
+    pattern: pub(crate) fn spawn_exit_watcher($$$PARAMS) { $$$BODY }
+    stopBy: end
+constraints:
+  OUTPUT_DRAINED:
+    regex: ^output_drained$

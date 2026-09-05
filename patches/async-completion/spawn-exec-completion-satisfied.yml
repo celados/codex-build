@@ -1,0 +1,10 @@
+id: spawns-yielded-exec-completion
+language: rust
+rule:
+  pattern: super::background_completion::spawn_background_completion($$$ARGS)
+  inside:
+    pattern: |
+      pub(super) async fn exec_command_inner($$$PARAMS) -> Result<ExecCommandToolOutput, UnifiedExecError> {
+          $$$BODY
+      }
+    stopBy: end

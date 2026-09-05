@@ -1,0 +1,12 @@
+id: add-async-completion-integration-module
+language: rust
+rule:
+  all:
+    - pattern: mod audio_truncation;
+    - not:
+        follows:
+          pattern: mod async_completion;
+          stopBy: end
+fix: |-
+  mod async_completion;
+  mod audio_truncation;

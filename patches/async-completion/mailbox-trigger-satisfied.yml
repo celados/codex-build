@@ -1,0 +1,14 @@
+id: standalone-output-triggers-turn
+language: rust
+rule:
+  pattern: |
+    pub(crate) async fn has_trigger_turn_mailbox_items(&self) -> bool {
+        self.mailbox_pending_items
+            .lock()
+            .await
+            .iter()
+            .any(|item| match item {
+                PendingMailboxInput::InterAgent { communication, .. } => communication.trigger_turn,
+                PendingMailboxInput::StandaloneOutput { .. } => true,
+            })
+    }

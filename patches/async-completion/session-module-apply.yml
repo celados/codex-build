@@ -1,0 +1,12 @@
+id: add-async-completion-session-module
+language: rust
+rule:
+  all:
+    - pattern: mod turn_suspension;
+    - not:
+        follows:
+          pattern: pub(crate) mod async_completion;
+          stopBy: end
+fix: |-
+  pub(crate) mod async_completion;
+  mod turn_suspension;

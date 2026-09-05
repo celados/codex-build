@@ -1,0 +1,8 @@
+id: has-generalized-mailbox-constructor
+language: rust
+rule:
+  pattern: |
+    Self {
+        activity_tx,
+        mailbox_pending_items: Mutex::new(VecDeque::new()),
+    }

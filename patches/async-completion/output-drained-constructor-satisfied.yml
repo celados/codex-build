@@ -1,0 +1,4 @@
+id: constructs-durable-output-drained-signal
+language: rust
+rule:
+  pattern: let $OUTPUT_DRAINED = CancellationToken::new();
