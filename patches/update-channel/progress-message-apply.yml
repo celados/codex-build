@@ -1,0 +1,6 @@
+id: codex-build-update-progress-message
+language: Rust
+message: Keep the update progress message concise without exposing the installer command.
+rule:
+  pattern: println!("Updating Codex via `{cmd_str}`...")
+fix: println!("Updating Codex...")

@@ -1,0 +1,5 @@
+id: codex-build-update-progress-message-satisfied
+language: Rust
+message: The update progress message omits the installer command.
+rule:
+  pattern: println!("Updating Codex...")

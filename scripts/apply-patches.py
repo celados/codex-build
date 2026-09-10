@@ -82,6 +82,7 @@ PATCHES = (
     Patch("update release URL", "codex-rs/tui/src/updates.rs", "patches/update-channel/release-url-apply.yml", "patches/update-channel/release-url-satisfied.yml"),
     Patch("standalone installer", "codex-rs/tui/src/update_action.rs", "patches/update-channel/installer-apply.yml", "patches/update-channel/installer-satisfied.yml", 2),
     Patch("standalone update action", "codex-rs/tui/src/update_action.rs", "patches/update-channel/action-apply.yml", "patches/update-channel/action-satisfied.yml"),
+    Patch("update progress message", "codex-rs/cli/src/main.rs", "patches/update-channel/progress-message-apply.yml", "patches/update-channel/progress-message-satisfied.yml"),
     Patch("Computer Use MCP", "codex-rs/core/src/config/mod.rs", "patches/computer-use/apply.yml", "patches/computer-use/satisfied.yml"),
     Patch("model picker config action", "codex-rs/config/src/tui_keymap.rs", "patches/model-picker/config-apply.yml", "patches/model-picker/config-satisfied.yml"),
     Patch("model picker runtime field", "codex-rs/tui/src/keymap.rs", "patches/model-picker/runtime-field-apply.yml", "patches/model-picker/runtime-field-satisfied.yml"),
