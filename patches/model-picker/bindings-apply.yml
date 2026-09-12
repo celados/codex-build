@@ -4,7 +4,7 @@ message: Register the model picker in the shared action binding inventory.
 rule:
   all:
     - kind: token_tree
-    - regex: '(?s)^\[\s*interrupt_turn,\s*decrease_reasoning_effort,\s*increase_reasoning_effort,\s*previous_permission_mode,\s*next_permission_mode,\s*edit_queued_message,\s*\]$'
+    - regex: '(?s)^\[\s*interrupt_turn,\s*decrease_reasoning_effort,\s*increase_reasoning_effort,\s*previous_permission_mode,\s*next_permission_mode,\s*edit_queued_message,\s*prompt_stack_back,\s*skip_question,\s*\]$'
 fix: |-
   [
       interrupt_turn,
@@ -14,4 +14,6 @@ fix: |-
       previous_permission_mode,
       next_permission_mode,
       edit_queued_message,
+      prompt_stack_back,
+      skip_question,
   ]

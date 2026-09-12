@@ -134,11 +134,11 @@ index e6bd3ba..2683649 100644
 +                PendingSessionInput::BackgroundCompletion(completion) => completion.input,
 +            })
              .collect();
-@@ -320,3 +374,3 @@ impl InputQueue {
+@@ -314,3 +368,3 @@ impl InputQueue {
          }
 -        let (mailbox_items, start_options) = self.drain_mailbox_input_items().await;
 +        let (mailbox_items, start_options) = self.drain_session_input_items().await;
-         if let Some(active_turn_metadata) = active_turn_metadata
+         if pending_input.is_empty() {
 @@ -360,3 +414,3 @@ impl InputQueue {
          }
 -        self.has_pending_mailbox_items().await
@@ -206,11 +206,11 @@ index 5bf4101..c64315f 100644
  use codex_otel::TURN_UNIFIED_EXEC_RUNNING_PROCESSES_METRIC;
 +use codex_protocol::config_types::ModeKind;
  use codex_protocol::models::ResponseItem;
-@@ -309,3 +310,3 @@ impl Session {
+@@ -314,3 +315,3 @@ impl Session {
  
--        let (pending_items, start_options) = self.input_queue.drain_mailbox_input_items().await;
-+        let (pending_items, start_options) = self.input_queue.drain_session_input_items().await;
-         if turn_context.turn_metadata_state.root_turn_id().is_none()
+-        let (pending_items, _) = self.input_queue.drain_mailbox_input_items().await;
++        let (pending_items, _) = self.input_queue.drain_session_input_items().await;
+         let turn_state = {
 @@ -446,6 +447,14 @@ impl Session {
      ) {
 -        if !self.input_queue.has_pending_mailbox_items().await
