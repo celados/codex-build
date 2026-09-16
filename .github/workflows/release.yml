@@ -62,7 +62,9 @@ jobs:
         working-directory: ${{ runner.temp }}/codex-builder
         env:
           FORCE_RELEASE: ${{ inputs.force_release || false }}
-        run: python3 scripts/resolve-release.py
+        run: |
+          python3 scripts/test_resolve_release.py
+          python3 scripts/resolve-release.py
 
       - name: Prepare build runner
         if: steps.release.outputs.release == 'true'

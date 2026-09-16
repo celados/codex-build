@@ -38,13 +38,46 @@ if [[ "$check_only" -eq 0 && -z "$version" ]]; then
   exit 2
 fi
 
+retry_git_network() {
+  local attempt
+  for attempt in 1 2 3; do
+    if "$@"; then
+      return 0
+    fi
+    if [[ "$attempt" -eq 3 ]]; then
+      return 1
+    fi
+    # GitHub occasionally terminates large filtered transfers mid-stream; retrying
+    # the disposable operation is cheaper and safer than preserving a partial clone.
+    echo "git network operation failed (attempt $attempt/3); retrying..." >&2
+    sleep $((attempt * 5))
+  done
+}
+
+clone_upstream() {
+  local attempt
+  for attempt in 1 2 3; do
+    rm -rf -- "$source_dir"
+    if git clone --filter=blob:none --no-checkout \
+      https://github.com/openai/codex.git "$source_dir"; then
+      return 0
+    fi
+    if [[ "$attempt" -eq 3 ]]; then
+      return 1
+    fi
+    echo "upstream clone failed (attempt $attempt/3); retrying..." >&2
+    sleep $((attempt * 5))
+  done
+}
+
 if [[ ! -d "$source_dir/.git" ]]; then
-  git clone --filter=blob:none --no-checkout https://github.com/openai/codex.git "$source_dir"
+  clone_upstream
 fi
 # A cancelled runner can leave this cache-only lock after its Git process has exited.
 rm -f "$source_dir/.git/index.lock"
 
-git -C "$source_dir" fetch --force --depth=1 origin "refs/tags/$upstream_ref:refs/tags/$upstream_ref"
+retry_git_network git -C "$source_dir" fetch --force --depth=1 \
+  origin "refs/tags/$upstream_ref:refs/tags/$upstream_ref"
 # sources/ is a builder-owned cache; force checkout recovers an interrupted prior patch.
 git -C "$source_dir" checkout --detach --force "$upstream_ref"
 # Keep ignored Cargo artifacts, but remove non-ignored debris from interrupted jobs.
