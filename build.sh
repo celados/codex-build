@@ -58,6 +58,7 @@ clone_upstream() {
   local attempt
   for attempt in 1 2 3; do
     rm -rf -- "$source_dir"
+    # Releases need one tag, not upstream history; smaller transfers also retry faster.
     if git clone --depth=1 --single-branch --branch "$upstream_ref" --no-checkout \
       https://github.com/openai/codex.git "$source_dir"; then
       return 0

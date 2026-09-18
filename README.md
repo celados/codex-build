@@ -57,9 +57,26 @@ Small upstream seams belong in `patches/`. Custom-build-owned modules live in
 `overlays/` and are copied into the disposable upstream checkout before those
 seams are applied. CI creates a fresh builder checkout and ignored `sources/`
 directory from the release tag on every run, then deletes that workspace after
-the attempt. Cargo downloads, V8 downloads, and release target artifacts use
-explicitly capped runner caches; daily no-op checks prune them as well, so reuse
-cannot turn into unbounded per-release generations.
+the attempt. CI uses a pinned, checksum-verified [mbx](https://mr-boxington.jdx.dev/)
+binary for local compiler caching. The Cargo target stays inside the disposable
+builder; only mbx objects (12 GiB budget, 13 GiB physical fallback ceiling), Cargo
+downloads (4 GiB), and V8 downloads (1 GiB) survive. Learned incremental state and
+managed targets are disabled. Build scripts execute normally because V8 writes
+its native archive outside Cargo's `OUT_DIR`, which build-script caching does not
+restore. These are per-runner retention limits, not limits
+on temporary build space; builds still require 30 GiB free before starting.
+
+Cleanup runs after success and failure, and daily no-op checks enforce the
+physical ceilings. The old persistent Cargo target is removed during migration.
+No remote compiler cache or global Cargo shim is installed. A failed mbx
+collection discards its rebuildable cache rather than leaving unbounded data.
+
+The manual `cache_trial` input builds the currently published upstream version
+with mbx, then rebuilds from an empty target to verify reuse. It never publishes.
+Step summaries record elapsed time, sampled peak storage (15-second intervals),
+and retained storage after cleanup; mbx logs report hits and bypass reasons.
+The ordinary release path runs just one mbx build. Explicit-target native linking
+is currently not cached by mbx, so cache hits do not eliminate final link time.
 
 The code-mode host links V8. The `v8` crate's default prebuilts ship no
 sandbox-enabled aarch64-apple-darwin archive, so `scripts/fetch-v8.py` points

@@ -47,9 +47,8 @@ prune_cache() {
   fi
 }
 
-# One current release target is roughly 7 GiB. These caps retain useful hot state
-# while ensuring stale Cargo hash generations cannot grow without bound.
-prune_cache "$target_cache" 12582912
+# Retire the pre-mbx target: retaining both would duplicate compiler storage.
+remove_cache "$target_cache"
 prune_cache "$cargo_home" 4194304
 prune_cache "$v8_cache" 1048576
 # Normal eviction keeps useful objects; this physical-size ceiling also covers
@@ -67,7 +66,7 @@ if [[ "$mode" == "prepare" ]]; then
 
   # Reusable data must never prevent a cold build. Drop the largest caches first,
   # stopping as soon as the compiler has enough headroom.
-  for path in "$target_cache" "$mbx_cache" "$cargo_home" "$v8_cache"; do
+  for path in "$mbx_cache" "$cargo_home" "$v8_cache"; do
     available_kib="$(df -Pk "$cache_root" | awk 'NR == 2 {print $4}')"
     if ((available_kib >= 31457280)); then
       break

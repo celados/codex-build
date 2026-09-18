@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       cache_trial:
-        description: Compare Cargo and two mbx builds without publishing
+        description: Verify two mbx builds from fresh targets without publishing
         required: false
         default: false
         type: boolean
@@ -60,7 +60,7 @@ jobs:
           "$builder/scripts/manage-runner-cache.sh" trim "$tool_cache"
           {
             echo "CARGO_HOME=$cache_root/cargo-home"
-            echo "CARGO_TARGET_DIR=$cache_root/target"
+            echo "CARGO_TARGET_DIR=$builder/target"
             echo "CODEX_BUILD_V8_CACHE_DIR=$cache_root/v8-cache"
           } >> "$GITHUB_ENV"
 
@@ -95,13 +95,8 @@ jobs:
         working-directory: ${{ runner.temp }}/codex-builder
         run: ./build.sh --check --upstream-ref "${{ steps.release.outputs.upstream_tag }}"
 
-      - name: Build and smoke-test
+      - name: Prepare local compiler cache
         if: steps.release.outputs.release == 'true'
-        working-directory: ${{ runner.temp }}/codex-builder
-        run: bash scripts/measure-build.sh cargo ./build.sh --upstream-ref "${{ steps.release.outputs.upstream_tag }}" --version "${{ steps.release.outputs.version }}"
-
-      - name: Prepare mbx trial
-        if: inputs.cache_trial
         working-directory: ${{ runner.temp }}/codex-builder
         run: |
           set -euo pipefail
@@ -114,16 +109,16 @@ jobs:
             echo "MBX_GC_MAX_SIZE=12GiB"
             echo "MBX_GC_MAX_TOTAL_SIZE=12GiB"
             echo "MBX_LEARNED_INCREMENTAL=false"
+            # V8 writes its archive outside OUT_DIR; replaying build.rs output loses it.
+            echo "MBX_BUILD_SCRIPT_EXECUTION=false"
             echo "MBX_TARGET_VIEWS=false"
             echo "MBX_SUMMARY=full"
           } >> "$GITHUB_ENV"
-          # The baseline is measured; retire its target instead of keeping two caches.
-          rm -rf -- "$RUNNER_TOOL_CACHE/codex-build/target"
 
-      - name: Fill mbx cache
-        if: inputs.cache_trial
+      - name: Build and smoke-test with mbx
+        if: steps.release.outputs.release == 'true'
         working-directory: ${{ runner.temp }}/codex-builder
-        run: bash scripts/measure-build.sh mbx-fill ./build.sh --upstream-ref "${{ steps.release.outputs.upstream_tag }}" --version "${{ steps.release.outputs.version }}"
+        run: bash scripts/measure-build.sh mbx-build ./build.sh --upstream-ref "${{ steps.release.outputs.upstream_tag }}" --version "${{ steps.release.outputs.version }}"
 
       - name: Rebuild from mbx cache
         if: inputs.cache_trial
@@ -166,6 +161,8 @@ jobs:
           builder="$RUNNER_TEMP/codex-builder"
           tool_cache="${RUNNER_TOOL_CACHE:?RUNNER_TOOL_CACHE is required}"
           cache_status=0
+          # Release the disposable target before collecting objects it referenced.
+          rm -rf -- "$builder/target" "$builder/sources"
           # Trim after failures as well: interrupted compilers are exactly when stale
           # generations would otherwise escape the pre-build size bound.
           if [[ -x "$builder/scripts/manage-runner-cache.sh" ]]; then
