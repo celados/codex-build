@@ -58,7 +58,7 @@ clone_upstream() {
   local attempt
   for attempt in 1 2 3; do
     rm -rf -- "$source_dir"
-    if git clone --filter=blob:none --no-checkout \
+    if git clone --depth=1 --single-branch --branch "$upstream_ref" --no-checkout \
       https://github.com/openai/codex.git "$source_dir"; then
       return 0
     fi
@@ -135,7 +135,8 @@ python3 "$repo_dir/scripts/fetch-v8.py" \
   # Running here activates upstream's pinned rust-toolchain.toml.
   cargo fmt --all
   cargo fmt --all -- --check
-  cargo build \
+  # CI's disposable target is restored from a bounded local object cache.
+  "${CODEX_BUILD_COMPILER:-cargo}" build \
     --target aarch64-apple-darwin \
     --release \
     -p codex-cli --bin codex \

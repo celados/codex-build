@@ -17,6 +17,7 @@ cache_root="$runner_tool_cache/codex-build"
 cargo_home="$cache_root/cargo-home"
 target_cache="$cache_root/target"
 v8_cache="$cache_root/v8-cache"
+mbx_cache="$cache_root/mbx"
 
 assert_cache_child() {
   local path="$1"
@@ -51,13 +52,22 @@ prune_cache() {
 prune_cache "$target_cache" 12582912
 prune_cache "$cargo_home" 4194304
 prune_cache "$v8_cache" 1048576
+# Normal eviction keeps useful objects; this physical-size ceiling also covers
+# metadata outside mbx's logical object budget and works after failed builds.
+if [[ -d "$mbx_cache" ]] && command -v mbx >/dev/null; then
+  if ! MBX_CACHE_DIR="$mbx_cache" mbx gc --max-size 12GiB --json; then
+    echo "mbx collection failed; discarding the rebuildable object cache" >&2
+    remove_cache "$mbx_cache"
+  fi
+fi
+prune_cache "$mbx_cache" 13631488
 
 if [[ "$mode" == "prepare" ]]; then
   mkdir -p "$cargo_home" "$target_cache" "$v8_cache"
 
   # Reusable data must never prevent a cold build. Drop the largest caches first,
   # stopping as soon as the compiler has enough headroom.
-  for path in "$target_cache" "$cargo_home" "$v8_cache"; do
+  for path in "$target_cache" "$mbx_cache" "$cargo_home" "$v8_cache"; do
     available_kib="$(df -Pk "$cache_root" | awk 'NR == 2 {print $4}')"
     if ((available_kib >= 31457280)); then
       break

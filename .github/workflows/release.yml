@@ -6,6 +6,11 @@ on:
     - cron: "17 20 * * *"
   workflow_dispatch:
     inputs:
+      cache_trial:
+        description: Compare Cargo and two mbx builds without publishing
+        required: false
+        default: false
+        type: boolean
       force_release:
         description: Rebuild even when the latest upstream tag is already released
         required: false
@@ -21,7 +26,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || inputs.cache_trial
     runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 180
     env:
@@ -61,7 +66,7 @@ jobs:
         id: release
         working-directory: ${{ runner.temp }}/codex-builder
         env:
-          FORCE_RELEASE: ${{ inputs.force_release || false }}
+          FORCE_RELEASE: ${{ inputs.force_release || inputs.cache_trial || false }}
         run: |
           python3 scripts/test_resolve_release.py
           python3 scripts/resolve-release.py
@@ -86,10 +91,42 @@ jobs:
       - name: Build and smoke-test
         if: steps.release.outputs.release == 'true'
         working-directory: ${{ runner.temp }}/codex-builder
-        run: ./build.sh --upstream-ref "${{ steps.release.outputs.upstream_tag }}" --version "${{ steps.release.outputs.version }}"
+        run: bash scripts/measure-build.sh cargo ./build.sh --upstream-ref "${{ steps.release.outputs.upstream_tag }}" --version "${{ steps.release.outputs.version }}"
+
+      - name: Prepare mbx trial
+        if: inputs.cache_trial
+        working-directory: ${{ runner.temp }}/codex-builder
+        run: |
+          set -euo pipefail
+          bash scripts/install-mbx.sh "$RUNNER_TEMP/codex-builder/tools"
+          echo "$RUNNER_TEMP/codex-builder/tools" >> "$GITHUB_PATH"
+          echo "CODEX_BUILD_COMPILER=mbx" >> "$GITHUB_ENV"
+          echo "CARGO_TARGET_DIR=$RUNNER_TEMP/codex-builder/target" >> "$GITHUB_ENV"
+          echo "MBX_CACHE_DIR=$RUNNER_TOOL_CACHE/codex-build/mbx" >> "$GITHUB_ENV"
+          echo "MBX_GC_MAX_SIZE=12GiB" >> "$GITHUB_ENV"
+          echo "MBX_GC_MAX_TOTAL_SIZE=12GiB" >> "$GITHUB_ENV"
+          echo "MBX_LEARNED_INCREMENTAL=false" >> "$GITHUB_ENV"
+          echo "MBX_TARGET_VIEWS=false" >> "$GITHUB_ENV"
+          echo "MBX_SUMMARY=full" >> "$GITHUB_ENV"
+          # The baseline is measured; retire its target instead of keeping two caches.
+          rm -rf -- "$RUNNER_TOOL_CACHE/codex-build/target"
+
+      - name: Fill mbx cache
+        if: inputs.cache_trial
+        working-directory: ${{ runner.temp }}/codex-builder
+        run: bash scripts/measure-build.sh mbx-fill ./build.sh --upstream-ref "${{ steps.release.outputs.upstream_tag }}" --version "${{ steps.release.outputs.version }}"
+
+      - name: Rebuild from mbx cache
+        if: inputs.cache_trial
+        working-directory: ${{ runner.temp }}/codex-builder
+        run: |
+          # A fresh target proves object-cache reuse rather than Cargo freshness.
+          rm -rf -- "$RUNNER_TEMP/codex-builder/target"
+          mbx gc --max-size 12GiB --json
+          bash scripts/measure-build.sh mbx-reuse ./build.sh --upstream-ref "${{ steps.release.outputs.upstream_tag }}" --version "${{ steps.release.outputs.version }}"
 
       - name: Write provenance
-        if: steps.release.outputs.release == 'true'
+        if: steps.release.outputs.release == 'true' && !inputs.cache_trial
         working-directory: ${{ runner.temp }}/codex-builder
         run: |
           python3 scripts/write-provenance.py \
@@ -101,7 +138,7 @@ jobs:
             --run-id "$GITHUB_RUN_ID"
 
       - name: Publish release
-        if: steps.release.outputs.release == 'true'
+        if: steps.release.outputs.release == 'true' && !inputs.cache_trial
         working-directory: ${{ runner.temp }}/codex-builder
         run: |
           gh release create "${{ steps.release.outputs.release_tag }}" \
