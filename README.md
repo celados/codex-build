@@ -78,6 +78,14 @@ and retained storage after cleanup; mbx logs report hits and bypass reasons.
 The ordinary release path runs just one mbx build. Explicit-target native linking
 is currently not cached by mbx, so cache hits do not eliminate final link time.
 
+The [2026-09-18 trial](https://github.com/celados/codex-build/actions/runs/35318454314)
+on upstream `0.154.0` passed both builds and smoke checks: 15m15s cold, 13m58s
+from an empty target with 1,622 cache hits. The preceding Cargo retained-target
+baseline was 12m50s, so this trial does not establish a speed improvement over
+Cargo's warm cache. The mbx runner retained 7.2 GiB including dependencies after
+cleanup; sampled build peaks were 10.9 GiB cold and 12.6 GiB on reuse. Treat this
+as bounded-cache adoption, not a demonstrated build-speed optimization.
+
 The code-mode host links V8. The `v8` crate's default prebuilts ship no
 sandbox-enabled aarch64-apple-darwin archive, so `scripts/fetch-v8.py` points
 Cargo at the pair Codex publishes on its own `rusty-v8-v<crate_version>` tag,
