@@ -58,18 +58,25 @@ jobs:
           # Cargo never garbage-collects old hash generations. Daily no-op runs
           # still enforce the persistent cache ceilings.
           "$builder/scripts/manage-runner-cache.sh" trim "$tool_cache"
-          echo "CARGO_HOME=$cache_root/cargo-home" >> "$GITHUB_ENV"
-          echo "CARGO_TARGET_DIR=$cache_root/target" >> "$GITHUB_ENV"
-          echo "CODEX_BUILD_V8_CACHE_DIR=$cache_root/v8-cache" >> "$GITHUB_ENV"
+          {
+            echo "CARGO_HOME=$cache_root/cargo-home"
+            echo "CARGO_TARGET_DIR=$cache_root/target"
+            echo "CODEX_BUILD_V8_CACHE_DIR=$cache_root/v8-cache"
+          } >> "$GITHUB_ENV"
 
       - name: Resolve release versions
         id: release
         working-directory: ${{ runner.temp }}/codex-builder
         env:
           FORCE_RELEASE: ${{ inputs.force_release || inputs.cache_trial || false }}
+          CACHE_TRIAL: ${{ inputs.cache_trial || false }}
         run: |
           python3 scripts/test_resolve_release.py
-          python3 scripts/resolve-release.py
+          if [[ "$CACHE_TRIAL" == true ]]; then
+            python3 scripts/resolve-cache-trial.py
+          else
+            python3 scripts/resolve-release.py
+          fi
 
       - name: Prepare build runner
         if: steps.release.outputs.release == 'true'
@@ -100,14 +107,16 @@ jobs:
           set -euo pipefail
           bash scripts/install-mbx.sh "$RUNNER_TEMP/codex-builder/tools"
           echo "$RUNNER_TEMP/codex-builder/tools" >> "$GITHUB_PATH"
-          echo "CODEX_BUILD_COMPILER=mbx" >> "$GITHUB_ENV"
-          echo "CARGO_TARGET_DIR=$RUNNER_TEMP/codex-builder/target" >> "$GITHUB_ENV"
-          echo "MBX_CACHE_DIR=$RUNNER_TOOL_CACHE/codex-build/mbx" >> "$GITHUB_ENV"
-          echo "MBX_GC_MAX_SIZE=12GiB" >> "$GITHUB_ENV"
-          echo "MBX_GC_MAX_TOTAL_SIZE=12GiB" >> "$GITHUB_ENV"
-          echo "MBX_LEARNED_INCREMENTAL=false" >> "$GITHUB_ENV"
-          echo "MBX_TARGET_VIEWS=false" >> "$GITHUB_ENV"
-          echo "MBX_SUMMARY=full" >> "$GITHUB_ENV"
+          {
+            echo "CODEX_BUILD_COMPILER=mbx"
+            echo "CARGO_TARGET_DIR=$RUNNER_TEMP/codex-builder/target"
+            echo "MBX_CACHE_DIR=$RUNNER_TOOL_CACHE/codex-build/mbx"
+            echo "MBX_GC_MAX_SIZE=12GiB"
+            echo "MBX_GC_MAX_TOTAL_SIZE=12GiB"
+            echo "MBX_LEARNED_INCREMENTAL=false"
+            echo "MBX_TARGET_VIEWS=false"
+            echo "MBX_SUMMARY=full"
+          } >> "$GITHUB_ENV"
           # The baseline is measured; retire its target instead of keeping two caches.
           rm -rf -- "$RUNNER_TOOL_CACHE/codex-build/target"
 
@@ -168,4 +177,5 @@ jobs:
           rm -rf -- "$builder"
           rm -rf -- "$GITHUB_WORKSPACE"
           rmdir "$(dirname "$GITHUB_WORKSPACE")" 2>/dev/null || true
+          du -sk "$tool_cache/codex-build" >> "$GITHUB_STEP_SUMMARY"
           exit "$cache_status"
