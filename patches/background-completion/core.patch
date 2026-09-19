@@ -358,17 +358,19 @@ index 366f631..894cebc 100644
      plugin_metrics_sidecar: Option<SharedPluginMetricsSidecar>,
 +    background_completion_delivery: Arc<BackgroundCompletionDelivery>,
  ) {
-@@ -199,11 +203,11 @@ pub(crate) fn spawn_exit_watcher(
+@@ -199,12 +203,12 @@ pub(crate) fn spawn_exit_watcher(
              drop(plugin_metrics_sidecar);
 -            emit_failed_exec_end_for_unified_exec(
 -                session_ref,
 -                turn_ref,
+-                model_info,
 -                call_id,
 -                command,
 -                cwd,
 +            let output = emit_failed_exec_end_for_unified_exec(
 +                Arc::clone(&session_ref),
 +                Arc::clone(&turn_ref),
++                model_info,
 +                call_id.clone(),
 +                command.clone(),
 +                cwd.clone(),
@@ -395,17 +397,19 @@ index 366f631..894cebc 100644
 +                    .await;
 +            }
          } else {
-@@ -224,11 +242,11 @@ pub(crate) fn spawn_exit_watcher(
+@@ -224,12 +242,12 @@ pub(crate) fn spawn_exit_watcher(
              .await;
 -            emit_exec_end_for_unified_exec(
 -                session_ref,
 -                turn_ref,
+-                model_info,
 -                call_id,
 -                command,
 -                cwd,
 +            let output = emit_exec_end_for_unified_exec(
 +                Arc::clone(&session_ref),
 +                Arc::clone(&turn_ref),
++                model_info,
 +                call_id.clone(),
 +                command.clone(),
 +                cwd.clone(),
