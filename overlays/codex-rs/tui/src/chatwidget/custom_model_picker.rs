@@ -32,7 +32,18 @@ impl ChatWidget {
         self.open_custom_model_picker_with_presets(presets);
     }
 
-    pub(super) fn open_custom_model_picker_with_presets(&mut self, presets: Vec<ModelPreset>) {
+    pub(super) fn open_custom_model_picker_with_presets(&mut self, mut presets: Vec<ModelPreset>) {
+        // Keep this distribution's picker default stable across remote catalog reorderings.
+        // If Astra is unavailable, preserve the provider's order and default instead.
+        if let Some(index) = presets
+            .iter()
+            .position(|preset| preset.show_in_picker && preset.model == "gpt-6-astra")
+        {
+            presets[..=index].rotate_right(1);
+            for (index, preset) in presets.iter_mut().enumerate() {
+                preset.is_default = index == 0;
+            }
+        }
         let current_model = self.current_model().to_string();
         let current_effort = self.effective_reasoning_effort();
         let items = presets

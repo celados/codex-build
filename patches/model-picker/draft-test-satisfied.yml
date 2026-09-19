@@ -13,3 +13,6 @@ rule:
     - has:
         pattern: "KeyEvent::new(KeyCode::Char('p'), KeyModifiers::ALT)"
         stopBy: end
+    - has:
+        pattern: 'let expected_default = if astra_visible == Some(true) { $$$YES } else { $$$NO };'
+        stopBy: end
