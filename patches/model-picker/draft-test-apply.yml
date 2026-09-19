@@ -78,37 +78,38 @@ fix: |-
       )));
       assert_eq!(chat.bottom_pane.composer_text(), "keep this draft");
 
-      // Catalog defaults can change remotely; the custom picker keeps Astra pinned
-      // even when the active model is Sol, without exposing unavailable models.
+      // Exercise preferences without mutating process-wide environment in parallel tests.
       for current_model in ["gpt-5.6-sol", "gpt-6-astra"] {
-          for astra_visible in [Some(true), Some(false), None] {
+          for (preferred_model, preferred_visible, expected_order) in [
+              (Some("gpt-6-astra"), true, vec!["gpt-6-astra", "gpt-5.6-sol", "gpt-future"]),
+              (Some("gpt-future"), true, vec!["gpt-future", "gpt-5.6-sol", "gpt-6-astra"]),
+              (Some("gpt-5.6-sol"), true, vec!["gpt-5.6-sol", "gpt-6-astra", "gpt-future"]),
+              (None, true, vec!["gpt-5.6-sol", "gpt-6-astra", "gpt-future"]),
+              (Some(""), true, vec!["gpt-5.6-sol", "gpt-6-astra", "gpt-future"]),
+              (Some("unknown-model"), true, vec!["gpt-5.6-sol", "gpt-6-astra", "gpt-future"]),
+              (Some("gpt-6-astra"), false, vec!["gpt-5.6-sol", "gpt-future"]),
+          ] {
               let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some(current_model)).await;
-              let mut sol = get_available_model(&chat, "gpt-5.4");
-              sol.model = "gpt-5.6-sol".to_string();
-              sol.show_in_picker = true;
-              sol.is_default = true;
-              let mut terra = sol.clone();
-              terra.model = "gpt-5.6-terra".to_string();
-              terra.is_default = false;
-              let mut presets = vec![sol.clone(), terra];
-              if let Some(visible) = astra_visible {
-                  let mut astra = sol;
-                  astra.model = "gpt-6-astra".to_string();
-                  astra.show_in_picker = visible;
-                  astra.is_default = false;
-                  presets.push(astra);
-              }
-              chat.open_custom_model_picker_with_presets(presets);
+              let base = get_available_model(&chat, "gpt-5.4");
+              let presets = ["gpt-5.6-sol", "gpt-6-astra", "gpt-future"]
+                  .into_iter()
+                  .map(|model| {
+                      let mut preset = base.clone();
+                      preset.model = model.to_string();
+                      preset.show_in_picker = Some(model) != preferred_model || preferred_visible;
+                      preset.is_default = model == "gpt-5.6-sol";
+                      preset
+                  })
+                  .collect();
+              chat.open_custom_model_picker_with_presets(presets, preferred_model);
               let popup = render_bottom_popup(&chat, 120);
               let rows: Vec<_> = popup.lines().filter(|line| line.contains("gpt-")).collect();
-              let expected_default = if astra_visible == Some(true) {
-                  "gpt-6-astra"
-              } else {
-                  "gpt-5.6-sol"
-              };
-              assert!(rows[0].contains(expected_default), "{popup}");
+              assert_eq!(rows.len(), expected_order.len(), "{popup}");
+              for (row, model) in rows.iter().zip(&expected_order) {
+                  assert!(row.contains(model), "{popup}");
+              }
               // The view displays current instead of default when both apply.
-              let expected_marker = if current_model == expected_default {
+              let expected_marker = if current_model == expected_order[0] {
                   "(current)"
               } else {
                   "(default)"
@@ -116,13 +117,9 @@ fix: |-
               assert!(rows[0].contains(expected_marker), "{popup}");
               assert_eq!(
                   popup.matches("(default)").count(),
-                  usize::from(current_model != expected_default),
+                  usize::from(current_model != expected_order[0]),
                   "{popup}"
               );
-              assert!(rows.last().unwrap().contains("gpt-5.6-terra"), "{popup}");
-              if astra_visible != Some(true) {
-                  assert!(!popup.contains("gpt-6-astra"), "{popup}");
-              }
               if let Some(row) = rows.iter().find(|row| row.contains(current_model)) {
                   assert!(row.contains("(current)"), "{popup}");
               }

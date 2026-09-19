@@ -33,6 +33,27 @@ artifact. Re-running it at the latest version is a no-op. Downloaded artifacts
 use a temporary directory that is removed on exit; the installer does not keep
 a version cache to prune.
 
+## Picker default model
+
+Set `CODEX_PICKER_DEFAULT_MODEL` in the environment that launches Codex to pin a
+visible model to the first row of the custom `Alt+P` picker:
+
+```sh
+CODEX_PICKER_DEFAULT_MODEL=gpt-6-astra codex
+```
+
+For a persistent terminal preference, add
+`export CODEX_PICKER_DEFAULT_MODEL="gpt-6-astra"` to your shell startup file
+(for example, `~/.zshrc`) and start Codex from a new shell. Desktop launchers
+must receive the variable separately; they do not normally read `.zshrc`.
+
+This controls only picker order and its default marker. The existing `model`
+configuration still controls the startup model, and choosing another current
+model does not change this preference. The current marker takes precedence
+when the preferred model is also selected. If the variable is unset, empty,
+or does not exactly match a visible model identifier, the provider's order
+and default remain unchanged. No model name is hardcoded as the fallback.
+
 ## Binary pairing
 
 Releases ship `codex` and `codex-code-mode-host` in a single archive, and the

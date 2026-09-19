@@ -29,16 +29,22 @@ impl ChatWidget {
                 return;
             }
         };
-        self.open_custom_model_picker_with_presets(presets);
+        let preferred_model = std::env::var("CODEX_PICKER_DEFAULT_MODEL").ok();
+        self.open_custom_model_picker_with_presets(presets, preferred_model.as_deref());
     }
 
-    pub(super) fn open_custom_model_picker_with_presets(&mut self, mut presets: Vec<ModelPreset>) {
-        // Keep this distribution's picker default stable across remote catalog reorderings.
-        // If Astra is unavailable, preserve the provider's order and default instead.
-        if let Some(index) = presets
-            .iter()
-            .position(|preset| preset.show_in_picker && preset.model == "gpt-6-astra")
-        {
+    pub(super) fn open_custom_model_picker_with_presets(
+        &mut self,
+        mut presets: Vec<ModelPreset>,
+        preferred_model: Option<&str>,
+    ) {
+        // Keep an explicit picker preference independent of the current session model.
+        // Missing or unavailable preferences preserve the provider's order and default.
+        if let Some(index) = preferred_model.and_then(|model| {
+            presets
+                .iter()
+                .position(|preset| preset.show_in_picker && preset.model == model)
+        }) {
             presets[..=index].rotate_right(1);
             for (index, preset) in presets.iter_mut().enumerate() {
                 preset.is_default = index == 0;
