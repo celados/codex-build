@@ -1,9 +1,9 @@
 //! Custom-build-owned model picker that commits a model and its effort as one choice.
 
 use super::*;
-use crate::bottom_pane::SelectionDescriptionLayout;
 use crate::bottom_pane::selection_accessory::SelectionAccessory;
 use crate::bottom_pane::selection_accessory::SelectionAccessoryOption;
+use crate::render::renderable::ColumnRenderable;
 
 pub(super) const CUSTOM_MODEL_SELECTION_VIEW_ID: &str = "custom-model-selection";
 
@@ -29,32 +29,43 @@ impl ChatWidget {
                 return;
             }
         };
-        let preferred_model = std::env::var("CODEX_PICKER_DEFAULT_MODEL").ok();
-        self.open_custom_model_picker_with_presets(presets, preferred_model.as_deref());
+        let picker_models = std::env::var("CODEX_PICKER_MODELS")
+            .ok()
+            .and_then(|spec| parse_picker_models(&spec));
+        self.open_custom_model_picker_with_presets(presets, picker_models.as_deref());
     }
 
     pub(super) fn open_custom_model_picker_with_presets(
         &mut self,
         mut presets: Vec<ModelPreset>,
-        preferred_model: Option<&str>,
+        picker_models: Option<&[String]>,
     ) {
-        // Keep an explicit picker preference independent of the current session model.
-        // Missing or unavailable preferences preserve the provider's order and default.
-        if let Some(index) = preferred_model.and_then(|model| {
-            presets
+        // The allowlist is independent of the current session model. Listed models the
+        // provider does not offer are skipped; if none remain, the picker would be unusable,
+        // so the provider's list, order, and default stay unchanged instead.
+        if let Some(picker_models) = picker_models {
+            let chosen: Vec<ModelPreset> = picker_models
                 .iter()
-                .position(|preset| preset.show_in_picker && preset.model == model)
-        }) {
-            presets[..=index].rotate_right(1);
-            for (index, preset) in presets.iter_mut().enumerate() {
-                preset.is_default = index == 0;
+                .filter_map(|model| {
+                    presets
+                        .iter()
+                        .find(|preset| preset.show_in_picker && &preset.model == model)
+                        .cloned()
+                })
+                .collect();
+            if !chosen.is_empty() {
+                presets = chosen;
+                for (index, preset) in presets.iter_mut().enumerate() {
+                    preset.is_default = index == 0;
+                }
             }
         }
         let current_model = self.current_model().to_string();
         let current_effort = self.effective_reasoning_effort();
+        presets.retain(|preset| preset.show_in_picker);
+        let model_ids = presets.iter().map(|preset| preset.model.clone()).collect();
         let items = presets
             .into_iter()
-            .filter(|preset| preset.show_in_picker)
             .map(|preset| {
                 let is_current = preset.model == current_model;
                 let direct_efforts = &preset.supported_reasoning_efforts;
@@ -108,18 +119,18 @@ impl ChatWidget {
                 "Plan mode · effort applies to this mode only".dim(),
             ));
         }
-        self.show_model_selection_view(SelectionViewParams {
-            view_id: Some(CUSTOM_MODEL_SELECTION_VIEW_ID),
-            footer_hint: Some(Line::from("enter confirm   ← → effort   esc")),
-            items,
-            is_searchable: true,
-            search_placeholder: Some("Search models".to_string()),
-            description_layout: SelectionDescriptionLayout::StackBelowWhenNarrow {
-                min_description_width: 24,
+        self.show_model_selection_view(
+            model_ids,
+            SelectionViewParams {
+                view_id: Some(CUSTOM_MODEL_SELECTION_VIEW_ID),
+                footer_hint: Some(Line::from("enter confirm   ← → effort   esc")),
+                items,
+                is_searchable: true,
+                search_placeholder: Some("Search models".to_string()),
+                header: Box::new(header),
+                ..Default::default()
             },
-            header: Box::new(header),
-            ..Default::default()
-        });
+        );
     }
 
     fn custom_model_selection_actions(
@@ -150,4 +161,48 @@ impl ChatWidget {
             }
         })]
     }
+}
+
+/// Parses `CODEX_PICKER_MODELS`, e.g. `6/{sol,astra,luna};5.6/sol;5.5`, into ordered model
+/// slugs (`gpt-6-sol`, …, `gpt-5.6-sol`, `gpt-5.5`). Order is preference order and duplicates
+/// keep their first position. Any malformed group rejects the whole spec: a typo silently
+/// narrowing the picker would be harder to notice than the provider's full list.
+pub(super) fn parse_picker_models(spec: &str) -> Option<Vec<String>> {
+    let mut models = Vec::new();
+    for group in spec
+        .split(';')
+        .map(str::trim)
+        .filter(|group| !group.is_empty())
+    {
+        let slugs = match group.split_once('/') {
+            None => vec![format!("gpt-{}", valid_part(group)?)],
+            Some((version, names)) => {
+                let version = valid_part(version)?;
+                let names = names.trim();
+                let names = match names.strip_prefix('{') {
+                    Some(braced) => braced.strip_suffix('}')?,
+                    None => names,
+                };
+                names
+                    .split(',')
+                    .map(|name| valid_part(name).map(|name| format!("gpt-{version}-{name}")))
+                    .collect::<Option<Vec<_>>>()?
+            }
+        };
+        for slug in slugs {
+            if !models.contains(&slug) {
+                models.push(slug);
+            }
+        }
+    }
+    (!models.is_empty()).then_some(models)
+}
+
+fn valid_part(part: &str) -> Option<&str> {
+    let part = part.trim();
+    (!part.is_empty()
+        && part
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-'))
+    .then_some(part)
 }

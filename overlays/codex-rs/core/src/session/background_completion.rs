@@ -44,7 +44,8 @@ impl BackgroundCompletion {
             namespace: None,
             output: FunctionCallOutputPayload::from_text(output),
             internal_chat_message_metadata_passthrough: None,
-        })
+        }
+        .into())
     }
 }
 

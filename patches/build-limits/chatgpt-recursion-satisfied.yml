@@ -1,0 +1,6 @@
+id: codex-build-chatgpt-recursion-limit-satisfied
+language: Rust
+message: codex-chatgpt declares a raised recursion limit.
+rule:
+  kind: inner_attribute_item
+  regex: 'recursion_limit\s*=\s*"\d+"'

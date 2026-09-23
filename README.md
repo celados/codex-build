@@ -33,26 +33,30 @@ artifact. Re-running it at the latest version is a no-op. Downloaded artifacts
 use a temporary directory that is removed on exit; the installer does not keep
 a version cache to prune.
 
-## Picker default model
+## Picker models
 
-Set `CODEX_PICKER_DEFAULT_MODEL` in the environment that launches Codex to pin a
-visible model to the first row of the custom `Alt+P` picker:
+Set `CODEX_PICKER_MODELS` in the environment that launches Codex to choose which
+models the custom `Alt+P` picker offers, and in what order:
 
 ```sh
-CODEX_PICKER_DEFAULT_MODEL=gpt-6-astra codex
+CODEX_PICKER_MODELS='6/{sol,astra,luna};5.6/sol' codex
 ```
 
-For a persistent terminal preference, add
-`export CODEX_PICKER_DEFAULT_MODEL="gpt-6-astra"` to your shell startup file
-(for example, `~/.zshrc`) and start Codex from a new shell. Desktop launchers
-must receive the variable separately; they do not normally read `.zshrc`.
+Groups are separated by `;`. Each group is `<version>/{<codename>,...}`
+(braces optional for one codename) and expands to `gpt-<version>-<codename>`;
+a bare `<version>` such as `5.5` names `gpt-5.5`. The picker shows only the
+listed models, in the written order, and marks the first as default. Listed
+models the provider does not currently offer are skipped.
 
-This controls only picker order and its default marker. The existing `model`
-configuration still controls the startup model, and choosing another current
-model does not change this preference. The current marker takes precedence
-when the preferred model is also selected. If the variable is unset, empty,
-or does not exactly match a visible model identifier, the provider's order
-and default remain unchanged. No model name is hardcoded as the fallback.
+For a persistent preference, export the variable from your shell startup file
+(for fish: `set -gx CODEX_PICKER_MODELS '6/{sol,astra,luna}'`) and start Codex
+from a new shell. Desktop launchers must receive the variable separately.
+
+This controls only the picker; the `model` configuration still controls the
+startup model, and the current marker takes precedence over the default marker.
+If the variable is unset, malformed (the whole value is then ignored), or
+matches no offered model, the provider's list, order, and default are unchanged.
+No model name is hardcoded as the fallback.
 
 ## Binary pairing
 

@@ -16,6 +16,9 @@ Patch groups:
   session input queue, which resumes an idle thread or follows the existing
   active-turn delivery semantics. Plan mode keeps the item queued until a
   user-driven turn starts.
+- `build-limits/` — raises `codex-chatgpt`'s `recursion_limit`. Upstream 0.156.0
+  overflows the default query depth when this repository builds with
+  `-p codex-cli`; upstream already applies the same attribute to five other crates.
 
 Each group has an apply rule and a satisfied rule. `scripts/apply-patches.py`
 requires exactly one recognized state and rejects ambiguous or unknown upstream

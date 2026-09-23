@@ -1,4 +1,5 @@
 use super::*;
+use codex_history::ResponseItemEnvelope;
 use codex_protocol::models::ResponseItem;
 
 #[test]
@@ -14,8 +15,10 @@ fn completion_output_is_bounded_on_a_utf8_boundary() {
         output: "你".repeat(MAX_BACKGROUND_COMPLETION_OUTPUT_BYTES),
     };
 
-    let TurnInput::FunctionCallOutput(ResponseItem::FunctionCallOutput { output, .. }) =
-        completion.into_turn_input()
+    let TurnInput::FunctionCallOutput(ResponseItemEnvelope {
+        item: ResponseItem::FunctionCallOutput { output, .. },
+        ..
+    }) = completion.into_turn_input()
     else {
         panic!("completion should render as a standalone function-call output");
     };

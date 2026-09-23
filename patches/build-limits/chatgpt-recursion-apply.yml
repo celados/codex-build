@@ -1,0 +1,16 @@
+id: codex-build-chatgpt-recursion-limit
+language: Rust
+message: Raise codex-chatgpt's query depth limit for package-scoped release builds.
+rule:
+  pattern: pub mod apply_command;
+  inside:
+    kind: source_file
+  not:
+    follows:
+      kind: inner_attribute_item
+      stopBy: end
+fix: |-
+  // `cargo build -p codex-cli` overflows the default limit while computing the layout of
+  // `connectors::list_connectors` (upstream 0.156.0); upstream raises it the same way elsewhere.
+  #![recursion_limit = "256"]
+  pub mod apply_command;

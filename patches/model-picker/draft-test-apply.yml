@@ -52,6 +52,7 @@ fix: |-
             Model
 
             Search models
+
           › gpt-5.4 (current)  low · MEDIUM · high · max
 
             enter confirm   ← → effort   esc
@@ -78,30 +79,50 @@ fix: |-
       )));
       assert_eq!(chat.bottom_pane.composer_text(), "keep this draft");
 
-      // Exercise preferences without mutating process-wide environment in parallel tests.
+      assert_eq!(
+          crate::chatwidget::custom_model_picker::parse_picker_models(
+              " 6/{sol, astra,luna} ; 5.6/sol;5.5;6/sol ",
+          ),
+          Some(
+              ["gpt-6-sol", "gpt-6-astra", "gpt-6-luna", "gpt-5.6-sol", "gpt-5.5"]
+                  .map(String::from)
+                  .to_vec()
+          )
+      );
+      for malformed in ["", " ; ", "6/{sol", "6/{}", "6/sol,", "/sol", "6/so l"] {
+          assert_eq!(
+              crate::chatwidget::custom_model_picker::parse_picker_models(malformed),
+              None,
+              "{malformed}"
+          );
+      }
+
+      // Exercise the allowlist without mutating process-wide environment in parallel tests.
+      let provider_order = vec!["gpt-5.6-sol", "gpt-6-astra", "gpt-6-luna"];
       for current_model in ["gpt-5.6-sol", "gpt-6-astra"] {
-          for (preferred_model, preferred_visible, expected_order) in [
-              (Some("gpt-6-astra"), true, vec!["gpt-6-astra", "gpt-5.6-sol", "gpt-future"]),
-              (Some("gpt-future"), true, vec!["gpt-future", "gpt-5.6-sol", "gpt-6-astra"]),
-              (Some("gpt-5.6-sol"), true, vec!["gpt-5.6-sol", "gpt-6-astra", "gpt-future"]),
-              (None, true, vec!["gpt-5.6-sol", "gpt-6-astra", "gpt-future"]),
-              (Some(""), true, vec!["gpt-5.6-sol", "gpt-6-astra", "gpt-future"]),
-              (Some("unknown-model"), true, vec!["gpt-5.6-sol", "gpt-6-astra", "gpt-future"]),
-              (Some("gpt-6-astra"), false, vec!["gpt-5.6-sol", "gpt-future"]),
+          for (spec, astra_visible, expected_order) in [
+              (Some("6/{luna,astra}"), true, vec!["gpt-6-luna", "gpt-6-astra"]),
+              (Some("6/{sol,astra};5.6/sol"), true, vec!["gpt-6-astra", "gpt-5.6-sol"]),
+              (Some("6/astra;5.6/sol"), false, vec!["gpt-5.6-sol"]),
+              (None, true, provider_order.clone()),
+              (Some("6/unknown"), true, provider_order.clone()),
           ] {
               let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some(current_model)).await;
               let base = get_available_model(&chat, "gpt-5.4");
-              let presets = ["gpt-5.6-sol", "gpt-6-astra", "gpt-future"]
-                  .into_iter()
+              let presets = provider_order
+                  .iter()
                   .map(|model| {
                       let mut preset = base.clone();
                       preset.model = model.to_string();
-                      preset.show_in_picker = Some(model) != preferred_model || preferred_visible;
-                      preset.is_default = model == "gpt-5.6-sol";
+                      preset.show_in_picker = *model != "gpt-6-astra" || astra_visible;
+                      preset.is_default = *model == "gpt-5.6-sol";
                       preset
                   })
                   .collect();
-              chat.open_custom_model_picker_with_presets(presets, preferred_model);
+              let picker_models = spec.and_then(
+                  crate::chatwidget::custom_model_picker::parse_picker_models,
+              );
+              chat.open_custom_model_picker_with_presets(presets, picker_models.as_deref());
               let popup = render_bottom_popup(&chat, 120);
               let rows: Vec<_> = popup.lines().filter(|line| line.contains("gpt-")).collect();
               assert_eq!(rows.len(), expected_order.len(), "{popup}");
