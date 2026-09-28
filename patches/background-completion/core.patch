@@ -1,21 +1,21 @@
 diff --git a/codex-rs/core/src/agent/control_tests.rs b/codex-rs/core/src/agent/control_tests.rs
-index a55a8bbb..e2417e76 100644
+index ceaeaa32..b16cfcf1 100644
 --- a/codex-rs/core/src/agent/control_tests.rs
 +++ b/codex-rs/core/src/agent/control_tests.rs
-@@ -941,3 +941,3 @@ async fn check_v2_agent_reload(route: V2ReloadRoute) {
+@@ -1026,3 +1026,3 @@ async fn check_v2_agent_reload(route: V2ReloadRoute) {
                  .input_queue
 -                .drain_mailbox_input_items()
 +                .drain_session_input_items()
                  .await;
 diff --git a/codex-rs/core/src/session/input_queue.rs b/codex-rs/core/src/session/input_queue.rs
-index ddd3038c..b560ff30 100644
+index 6ddef171..0d100dfc 100644
 --- a/codex-rs/core/src/session/input_queue.rs
 +++ b/codex-rs/core/src/session/input_queue.rs
 @@ -18,2 +18,3 @@ use tokio::sync::watch;
  static PENDING_MAILBOX_MESSAGES: Gauge = Gauge::new("core.mailbox.pending");
 +static PENDING_BACKGROUND_COMPLETIONS: Gauge = Gauge::new("core.background_completion.pending");
  
-@@ -82,3 +83,8 @@ pub(crate) struct InputQueue {
+@@ -94,3 +95,8 @@ pub(crate) struct InputQueue {
      activity_tx: watch::Sender<InputQueueActivity>,
 -    mailbox_pending_mails: Mutex<VecDeque<PendingMailboxCommunication>>,
 +    pending_session_inputs: Mutex<VecDeque<PendingSessionInput>>,
@@ -25,7 +25,7 @@ index ddd3038c..b560ff30 100644
 +    Mailbox(PendingMailboxCommunication),
 +    BackgroundCompletion(PendingBackgroundCompletion),
  }
-@@ -91,2 +97,7 @@ struct PendingMailboxCommunication {
+@@ -103,2 +109,7 @@ struct PendingMailboxCommunication {
  
 +struct PendingBackgroundCompletion {
 +    input: TurnInput,
@@ -33,17 +33,17 @@ index ddd3038c..b560ff30 100644
 +}
 +
  impl InputQueue {
-@@ -96,3 +107,3 @@ impl InputQueue {
+@@ -108,3 +119,3 @@ impl InputQueue {
              activity_tx,
 -            mailbox_pending_mails: Mutex::new(VecDeque::new()),
 +            pending_session_inputs: Mutex::new(VecDeque::new()),
          }
-@@ -115,3 +126,3 @@ impl InputQueue {
+@@ -127,3 +138,3 @@ impl InputQueue {
              Some(InputQueueActivity::Steer)
 -        } else if self.has_pending_mailbox_items().await {
 +        } else if self.has_pending_session_items().await {
              Some(InputQueueActivity::Mailbox)
-@@ -128,6 +139,6 @@ impl InputQueue {
+@@ -140,6 +151,6 @@ impl InputQueue {
      ) {
 -        self.mailbox_pending_mails
 +        self.pending_session_inputs
@@ -52,7 +52,7 @@ index ddd3038c..b560ff30 100644
 -            .push_back(PendingMailboxCommunication {
 +            .push_back(PendingSessionInput::Mailbox(PendingMailboxCommunication {
                  communication,
-@@ -135,3 +146,13 @@ impl InputQueue {
+@@ -147,3 +158,13 @@ impl InputQueue {
                  _diagnostics_guard: PENDING_MAILBOX_MESSAGES.track(),
 -            });
 +            }));
@@ -67,7 +67,7 @@ index ddd3038c..b560ff30 100644
 +            }),
 +        );
          self.activity_tx.send_replace(InputQueueActivity::Mailbox);
-@@ -140,3 +161,19 @@ impl InputQueue {
+@@ -152,3 +173,19 @@ impl InputQueue {
      pub(crate) async fn has_pending_mailbox_items(&self) -> bool {
 -        !self.mailbox_pending_mails.lock().await.is_empty()
 +        self.pending_session_inputs
@@ -88,12 +88,12 @@ index ddd3038c..b560ff30 100644
 +    pub(crate) async fn has_pending_session_items(&self) -> bool {
 +        !self.pending_session_inputs.lock().await.is_empty()
      }
-@@ -144,3 +181,3 @@ impl InputQueue {
+@@ -156,3 +193,3 @@ impl InputQueue {
      pub(crate) async fn has_trigger_turn_mailbox_items(&self) -> bool {
 -        self.mailbox_pending_mails
 +        self.pending_session_inputs
              .lock()
-@@ -148,8 +185,13 @@ impl InputQueue {
+@@ -160,8 +197,13 @@ impl InputQueue {
              .iter()
 -            .any(|mail| mail.communication.trigger_turn)
 +            .any(|input| {
@@ -111,7 +111,7 @@ index ddd3038c..b560ff30 100644
 +        let pending_inputs = self
 +            .pending_session_inputs
              .lock()
-@@ -158,2 +200,9 @@ impl InputQueue {
+@@ -170,2 +212,9 @@ impl InputQueue {
              .collect::<Vec<_>>();
 +        let pending_mails = pending_inputs
 +            .iter()
@@ -121,7 +121,7 @@ index ddd3038c..b560ff30 100644
 +            })
 +            .collect::<Vec<_>>();
          // A later follow-up supersedes the earlier choice, including an omitted choice.
-@@ -183,5 +232,10 @@ impl InputQueue {
+@@ -195,5 +244,10 @@ impl InputQueue {
              .map(str::to_string);
 -        let items = pending_mails
 +        let items = pending_inputs
@@ -134,22 +134,22 @@ index ddd3038c..b560ff30 100644
 +                PendingSessionInput::BackgroundCompletion(completion) => completion.input,
 +            })
              .collect();
-@@ -314,3 +368,3 @@ impl InputQueue {
+@@ -326,3 +380,3 @@ impl InputQueue {
          }
 -        let (mailbox_items, start_options) = self.drain_mailbox_input_items().await;
 +        let (mailbox_items, start_options) = self.drain_session_input_items().await;
          if pending_input.is_empty() {
-@@ -348,3 +402,3 @@ impl InputQueue {
+@@ -360,3 +414,3 @@ impl InputQueue {
          }
 -        self.has_pending_mailbox_items().await
 +        self.has_pending_session_items().await
      }
-@@ -556,3 +610,3 @@ mod tests {
+@@ -572,3 +626,3 @@ mod tests {
          assert_eq!(
 -            input_queue.drain_mailbox_input_items().await.0,
 +            input_queue.drain_session_input_items().await.0,
              vec![
-@@ -565,2 +619,26 @@ mod tests {
+@@ -581,2 +635,26 @@ mod tests {
  
 +    #[tokio::test]
 +    async fn input_queue_preserves_background_completion_order_with_mailbox() {
@@ -176,30 +176,30 @@ index ddd3038c..b560ff30 100644
 +    }
 +
      #[tokio::test]
-@@ -603,3 +681,3 @@ mod tests {
+@@ -619,3 +697,3 @@ mod tests {
              }
 -            let (_, start_options) = input_queue.drain_mailbox_input_items().await;
 +            let (_, start_options) = input_queue.drain_session_input_items().await;
              assert_eq!(
-@@ -633,3 +711,3 @@ mod tests {
+@@ -649,3 +727,3 @@ mod tests {
              }
 -            let (_, start_options) = input_queue.drain_mailbox_input_items().await;
 +            let (_, start_options) = input_queue.drain_session_input_items().await;
              assert_eq!(start_options.cyber_access_program, latest);
 diff --git a/codex-rs/core/src/session/mod.rs b/codex-rs/core/src/session/mod.rs
-index a4b4ba00..4b4d2c4d 100644
+index 6d1580bc..fd1c04ad 100644
 --- a/codex-rs/core/src/session/mod.rs
 +++ b/codex-rs/core/src/session/mod.rs
-@@ -226,2 +226,3 @@ use codex_protocol::exec_output::StreamOutput;
+@@ -228,2 +228,3 @@ use codex_protocol::exec_output::StreamOutput;
  
 +mod background_completion;
  mod code_mode_warning;
-@@ -262,2 +263,3 @@ mod turn_suspension;
+@@ -267,2 +268,3 @@ mod turn_suspension;
  mod world_state;
 +pub(crate) use self::background_completion::BackgroundCompletion;
  use self::code_mode_warning::unsupported_code_mode_warning;
 diff --git a/codex-rs/core/src/tasks/mod.rs b/codex-rs/core/src/tasks/mod.rs
-index 75127932..c8fca16d 100644
+index ab305bda..dd2b1f86 100644
 --- a/codex-rs/core/src/tasks/mod.rs
 +++ b/codex-rs/core/src/tasks/mod.rs
 @@ -48,2 +48,3 @@ use codex_otel::TURN_TOOL_CALL_METRIC;
@@ -230,7 +230,7 @@ index 75127932..c8fca16d 100644
 +            self.collaboration_mode().await.mode,
 +        ) {
              return;
-@@ -1004,2 +1013,13 @@ impl Session {
+@@ -1011,2 +1020,13 @@ impl Session {
  
 +fn pending_work_can_start_turn(
 +    has_trigger_mailbox: bool,
@@ -339,31 +339,32 @@ index 46fa63db..57083040 100644
 +
  #[test]
 diff --git a/codex-rs/core/src/unified_exec/async_watcher.rs b/codex-rs/core/src/unified_exec/async_watcher.rs
-index 245bdb0d..dc7e802d 100644
+index f30c750c..df15a019 100644
 --- a/codex-rs/core/src/unified_exec/async_watcher.rs
 +++ b/codex-rs/core/src/unified_exec/async_watcher.rs
 @@ -9,2 +9,3 @@ use tokio::time::Sleep;
  
 +use super::BackgroundCompletionDelivery;
  use super::SharedPluginMetricsSidecar;
-@@ -16,2 +17,3 @@ use crate::exec::MAX_EXEC_OUTPUT_DELTAS_PER_CALL;
+@@ -17,2 +18,3 @@ use crate::exec::MAX_EXEC_OUTPUT_DELTAS_PER_CALL;
  use crate::plugins::metrics::finish_and_track_measurements;
 +use crate::session::BackgroundCompletion;
  use crate::session::session::Session;
-@@ -169,2 +171,3 @@ pub(crate) fn spawn_exit_watcher(
+@@ -161,2 +163,3 @@ pub(crate) fn spawn_exit_watcher(
      command: Vec<String>,
 +    hook_command: String,
      cwd: PathUri,
-@@ -176,2 +179,3 @@ pub(crate) fn spawn_exit_watcher(
+@@ -168,2 +171,3 @@ pub(crate) fn spawn_exit_watcher(
      plugin_metrics_sidecar: Option<SharedPluginMetricsSidecar>,
 +    background_completion_delivery: Arc<BackgroundCompletionDelivery>,
  ) {
-@@ -203,12 +207,12 @@ pub(crate) fn spawn_exit_watcher(
+@@ -195,13 +199,13 @@ pub(crate) fn spawn_exit_watcher(
              drop(plugin_metrics_sidecar);
 -            emit_failed_exec_end_for_unified_exec(
++            let output = emit_failed_exec_end_for_unified_exec(
+                 process.sandbox_type(),
 -                session_ref,
 -                turn_ref,
-+            let output = emit_failed_exec_end_for_unified_exec(
 +                Arc::clone(&session_ref),
 +                Arc::clone(&turn_ref),
                  model_info,
@@ -375,11 +376,11 @@ index 245bdb0d..dc7e802d 100644
 +                cwd.clone(),
                  Some(process_id.to_string()),
 -                plugin_attribution,
--                transcript,
+-                output_buffer,
 +                plugin_attribution.clone(),
-+                Arc::clone(&transcript),
++                Arc::clone(&output_buffer),
                  String::new(),
-@@ -218,2 +222,16 @@ pub(crate) fn spawn_exit_watcher(
+@@ -211,2 +215,16 @@ pub(crate) fn spawn_exit_watcher(
              .await;
 +            if background_completion_delivery.claim_background().await {
 +                session_ref
@@ -396,12 +397,13 @@ index 245bdb0d..dc7e802d 100644
 +                    .await;
 +            }
          } else {
-@@ -230,12 +248,12 @@ pub(crate) fn spawn_exit_watcher(
+@@ -223,13 +241,13 @@ pub(crate) fn spawn_exit_watcher(
              .await;
 -            emit_exec_end_for_unified_exec(
++            let output = emit_exec_end_for_unified_exec(
+                 process.sandbox_type(),
 -                session_ref,
 -                turn_ref,
-+            let output = emit_exec_end_for_unified_exec(
 +                Arc::clone(&session_ref),
 +                Arc::clone(&turn_ref),
                  model_info,
@@ -413,11 +415,11 @@ index 245bdb0d..dc7e802d 100644
 +                cwd.clone(),
                  Some(process_id.to_string()),
 -                plugin_attribution,
--                transcript,
+-                output_buffer,
 +                plugin_attribution.clone(),
-+                Arc::clone(&transcript),
++                Arc::clone(&output_buffer),
                  String::new(),
-@@ -246,2 +264,16 @@ pub(crate) fn spawn_exit_watcher(
+@@ -240,2 +258,16 @@ pub(crate) fn spawn_exit_watcher(
              .await;
 +            if background_completion_delivery.claim_background().await {
 +                session_ref
@@ -434,36 +436,36 @@ index 245bdb0d..dc7e802d 100644
 +                    .await;
 +            }
          }
-@@ -357,3 +389,3 @@ pub(crate) async fn emit_exec_end_for_unified_exec(
+@@ -345,3 +377,3 @@ pub(crate) async fn emit_exec_end_for_unified_exec(
      timed_out: bool,
 -) {
 +) -> String {
-     let aggregated_output = resolve_aggregated_output(&transcript, fallback_output).await;
-@@ -363,3 +395,3 @@ pub(crate) async fn emit_exec_end_for_unified_exec(
+     let aggregated_output = resolve_aggregated_output(&output_buffer, fallback_output).await;
+@@ -351,3 +383,3 @@ pub(crate) async fn emit_exec_end_for_unified_exec(
          stderr: StreamOutput::new(String::new()),
 -        aggregated_output: StreamOutput::new(aggregated_output),
 +        aggregated_output: StreamOutput::new(aggregated_output.clone()),
          duration,
-@@ -390,2 +422,3 @@ pub(crate) async fn emit_exec_end_for_unified_exec(
+@@ -379,2 +411,3 @@ pub(crate) async fn emit_exec_end_for_unified_exec(
          .await;
 +    aggregated_output
  }
-@@ -406,3 +439,3 @@ pub(crate) async fn emit_failed_exec_end_for_unified_exec(
+@@ -396,3 +429,3 @@ pub(crate) async fn emit_failed_exec_end_for_unified_exec(
      duration: Duration,
 -) {
 +) -> String {
      let stdout = if fallback_output.is_empty() {
-@@ -421,3 +454,3 @@ pub(crate) async fn emit_failed_exec_end_for_unified_exec(
+@@ -411,3 +444,3 @@ pub(crate) async fn emit_failed_exec_end_for_unified_exec(
          stderr: StreamOutput::new(message),
 -        aggregated_output: StreamOutput::new(aggregated_output),
 +        aggregated_output: StreamOutput::new(aggregated_output.clone()),
          duration,
-@@ -445,2 +478,3 @@ pub(crate) async fn emit_failed_exec_end_for_unified_exec(
+@@ -436,2 +469,3 @@ pub(crate) async fn emit_failed_exec_end_for_unified_exec(
          .await;
 +    aggregated_output
  }
 diff --git a/codex-rs/core/src/unified_exec/async_watcher_tests.rs b/codex-rs/core/src/unified_exec/async_watcher_tests.rs
-index c2019a70..6c43ff8e 100644
+index d5e1b9ba..98ef6a69 100644
 --- a/codex-rs/core/src/unified_exec/async_watcher_tests.rs
 +++ b/codex-rs/core/src/unified_exec/async_watcher_tests.rs
 @@ -9,2 +9,4 @@ use super::utf8_boundary;
@@ -471,11 +473,21 @@ index c2019a70..6c43ff8e 100644
 +use crate::unified_exec::BackgroundCompletionDelivery;
 +use crate::unified_exec::BackgroundCompletionPolicy;
  use crate::unified_exec::UnifiedExecContext;
-@@ -238,2 +240,3 @@ async fn exit_watcher_waits_for_late_network_denial_before_classifying_end() ->
+@@ -109,2 +111,3 @@ async fn completed_output_preserves_bytes_before_subscription(
          vec!["proof".to_string()],
 +        "proof".to_string(),
          cwd,
-@@ -245,2 +248,5 @@ async fn exit_watcher_waits_for_late_network_denial_before_classifying_end() ->
+@@ -116,2 +119,5 @@ async fn completed_output_preserves_bytes_before_subscription(
+         /*plugin_metrics_sidecar*/ None,
++        Arc::new(BackgroundCompletionDelivery::new(
++            BackgroundCompletionPolicy::ObserveOnly,
++        )),
+     );
+@@ -325,2 +331,3 @@ async fn exit_watcher_waits_for_late_network_denial_before_classifying_end() ->
+         vec!["proof".to_string()],
++        "proof".to_string(),
+         cwd,
+@@ -332,2 +339,5 @@ async fn exit_watcher_waits_for_late_network_denial_before_classifying_end() ->
          /*plugin_metrics_sidecar*/ None,
 +        Arc::new(BackgroundCompletionDelivery::new(
 +            BackgroundCompletionPolicy::ObserveOnly,
@@ -618,7 +630,7 @@ index 3645306c..75847025 100644
 +    background_completion_delivery: Arc<BackgroundCompletionDelivery>,
      hook_command: String,
 diff --git a/codex-rs/core/src/unified_exec/mod_tests.rs b/codex-rs/core/src/unified_exec/mod_tests.rs
-index 7a945a07..75c3cf3e 100644
+index 6c09065f..f4797eff 100644
 --- a/codex-rs/core/src/unified_exec/mod_tests.rs
 +++ b/codex-rs/core/src/unified_exec/mod_tests.rs
 @@ -37,2 +37,62 @@ use tokio::time::Instant;
@@ -712,7 +724,7 @@ index 7a945a07..75c3cf3e 100644
 -            .store(false, std::sync::atomic::Ordering::Release);
 +        entry.background_completion_delivery.finish_initial_call();
      }
-@@ -705,3 +765,9 @@ async fn terminating_during_stdin_poll_returns_exited_response() -> anyhow::Resu
+@@ -706,3 +766,9 @@ async fn terminating_during_stdin_poll_returns_exited_response() -> anyhow::Resu
              cwd: cwd.into(),
 -            initial_exec_command_active: Arc::new(std::sync::atomic::AtomicBool::new(false)),
 +            background_completion_delivery: {
@@ -724,7 +736,7 @@ index 7a945a07..75c3cf3e 100644
 +            },
              hook_command: "sleep 60".to_string(),
 diff --git a/codex-rs/core/src/unified_exec/process_manager.rs b/codex-rs/core/src/unified_exec/process_manager.rs
-index 10578351..2101b04e 100644
+index d8433551..d0f7074f 100644
 --- a/codex-rs/core/src/unified_exec/process_manager.rs
 +++ b/codex-rs/core/src/unified_exec/process_manager.rs
 @@ -45,3 +45,5 @@ use crate::tools::sandboxing::ToolCtx;
@@ -733,64 +745,64 @@ index 10578351..2101b04e 100644
  use crate::unified_exec::ExecCommandRequest;
 +use crate::unified_exec::ForegroundCompletionClaim;
  use crate::unified_exec::MAX_UNIFIED_EXEC_PROCESSES;
-@@ -271,2 +273,3 @@ struct PreparedProcessHandles {
+@@ -272,2 +274,3 @@ struct PreparedProcessHandles {
      tty: bool,
 +    background_completion_delivery: Arc<BackgroundCompletionDelivery>,
  }
-@@ -274,3 +277,3 @@ struct PreparedProcessHandles {
+@@ -275,3 +278,3 @@ struct PreparedProcessHandles {
  struct InitialExecCommandGuard {
 -    active: Option<Arc<AtomicBool>>,
 +    delivery: Option<Arc<BackgroundCompletionDelivery>>,
      metrics_sidecar: Option<PluginMetricsSidecar>,
-@@ -295,4 +298,4 @@ impl Drop for InitialExecCommandGuard {
+@@ -296,4 +299,4 @@ impl Drop for InitialExecCommandGuard {
      fn drop(&mut self) {
 -        if let Some(active) = self.active.as_ref() {
 -            active.store(false, Ordering::Release);
 +        if let Some(delivery) = self.delivery.as_ref() {
 +            delivery.finish_initial_call();
          }
-@@ -601,3 +604,5 @@ impl UnifiedExecProcessManager {
+@@ -604,3 +607,5 @@ impl UnifiedExecProcessManager {
          let mut initial_exec_command_guard = if process_started_alive {
 -            let initial_exec_command_active = Arc::new(AtomicBool::new(true));
 +            let background_completion_delivery = Arc::new(BackgroundCompletionDelivery::new(
 +                request.background_completion_policy,
 +            ));
              self.store_process(
-@@ -618,3 +623,3 @@ impl UnifiedExecProcessManager {
-                 Arc::clone(&transcript),
+@@ -621,3 +626,3 @@ impl UnifiedExecProcessManager {
+                 Arc::clone(&output_buffer),
 -                Arc::clone(&initial_exec_command_active),
 +                Arc::clone(&background_completion_delivery),
              )
-@@ -622,3 +627,3 @@ impl UnifiedExecProcessManager {
+@@ -625,3 +630,3 @@ impl UnifiedExecProcessManager {
              InitialExecCommandGuard {
 -                active: Some(initial_exec_command_active),
 +                delivery: Some(background_completion_delivery),
                  metrics_sidecar: None,
-@@ -627,3 +632,3 @@ impl UnifiedExecProcessManager {
+@@ -630,3 +635,3 @@ impl UnifiedExecProcessManager {
              InitialExecCommandGuard {
 -                active: None,
 +                delivery: None,
                  metrics_sidecar,
-@@ -725,2 +730,3 @@ impl UnifiedExecProcessManager {
+@@ -730,2 +735,3 @@ impl UnifiedExecProcessManager {
                  ProcessStatus::Exited { exit_code, entry } => {
 +                    entry.background_completion_delivery.claim_foreground();
                      if let Err(message) =
-@@ -978,2 +984,3 @@ impl UnifiedExecProcessManager {
+@@ -981,2 +987,3 @@ impl UnifiedExecProcessManager {
              tty,
 +            background_completion_delivery,
              ..
-@@ -984,2 +991,6 @@ impl UnifiedExecProcessManager {
+@@ -987,2 +994,6 @@ impl UnifiedExecProcessManager {
  
 +        if request.input == INTERRUPT {
 +            background_completion_delivery.suppress();
 +        }
 +
          if !request.input.is_empty() {
-@@ -1076,2 +1087,3 @@ impl UnifiedExecProcessManager {
+@@ -1079,2 +1090,3 @@ impl UnifiedExecProcessManager {
              ProcessStatus::Exited { exit_code, entry } => {
 +                let completion_claim = entry.background_completion_delivery.claim_foreground();
                  let call_id = entry.call_id.clone();
-@@ -1082,2 +1094,7 @@ impl UnifiedExecProcessManager {
+@@ -1085,2 +1097,7 @@ impl UnifiedExecProcessManager {
                  }
 +                if completion_claim == ForegroundCompletionClaim::BackgroundAlreadyDelivered {
 +                    return Err(UnifiedExecError::UnknownProcessId {
@@ -798,44 +810,44 @@ index 10578351..2101b04e 100644
 +                    });
 +                }
                  (None, exit_code, call_id)
-@@ -1186,2 +1203,3 @@ impl UnifiedExecProcessManager {
+@@ -1189,2 +1206,3 @@ impl UnifiedExecProcessManager {
              tty: entry.tty,
 +            background_completion_delivery: Arc::clone(&entry.background_completion_delivery),
          })
-@@ -1207,3 +1225,3 @@ impl UnifiedExecProcessManager {
-         transcript: Arc<tokio::sync::Mutex<HeadTailBuffer>>,
+@@ -1210,3 +1228,3 @@ impl UnifiedExecProcessManager {
+         output_buffer: Arc<tokio::sync::Mutex<OutputBuffers>>,
 -        initial_exec_command_active: Arc<AtomicBool>,
 +        background_completion_delivery: Arc<BackgroundCompletionDelivery>,
      ) {
-@@ -1217,4 +1235,4 @@ impl UnifiedExecProcessManager {
+@@ -1220,4 +1238,4 @@ impl UnifiedExecProcessManager {
              cwd: cwd.clone(),
 -            initial_exec_command_active,
 -            hook_command,
 +            background_completion_delivery: Arc::clone(&background_completion_delivery),
 +            hook_command: hook_command.clone(),
              tty,
-@@ -1236,2 +1254,3 @@ impl UnifiedExecProcessManager {
+@@ -1239,2 +1257,3 @@ impl UnifiedExecProcessManager {
              unregister_network_approval_for_entry(&pruned_entry).await;
 +            pruned_entry.background_completion_delivery.suppress();
              pruned_entry.process.terminate();
-@@ -1243,2 +1262,3 @@ impl UnifiedExecProcessManager {
+@@ -1246,2 +1265,3 @@ impl UnifiedExecProcessManager {
              command.to_vec(),
 +            hook_command,
              cwd,
-@@ -1250,2 +1270,3 @@ impl UnifiedExecProcessManager {
+@@ -1253,2 +1273,3 @@ impl UnifiedExecProcessManager {
              plugin_metrics_sidecar,
 +            background_completion_delivery,
          );
-@@ -1811,2 +1832,3 @@ impl UnifiedExecProcessManager {
+@@ -1814,2 +1835,3 @@ impl UnifiedExecProcessManager {
              unregister_network_approval_for_entry(&entry).await;
 +            entry.background_completion_delivery.suppress();
              entry.process.terminate();
-@@ -1840,2 +1862,4 @@ impl UnifiedExecProcessManager {
+@@ -1853,2 +1875,4 @@ impl UnifiedExecProcessManager {
              };
 +            // Claim cancellation before waiting for process exit so the watcher cannot wake the agent.
 +            entry.background_completion_delivery.suppress();
              (Arc::clone(&entry.process), entry.process.has_exited())
-@@ -1855,3 +1879,6 @@ impl UnifiedExecProcessManager {
+@@ -1868,3 +1892,6 @@ impl UnifiedExecProcessManager {
              }
 -            if entry.initial_exec_command_active.load(Ordering::Acquire) {
 +            if entry
@@ -844,18 +856,18 @@ index 10578351..2101b04e 100644
 +            {
                  return true;
 diff --git a/codex-rs/core/src/unified_exec/process_manager_tests.rs b/codex-rs/core/src/unified_exec/process_manager_tests.rs
-index 297c84fa..ccf9cff8 100644
+index 5ce38c49..5e17a2d6 100644
 --- a/codex-rs/core/src/unified_exec/process_manager_tests.rs
 +++ b/codex-rs/core/src/unified_exec/process_manager_tests.rs
 @@ -1,2 +1,3 @@
  use super::*;
 +use crate::unified_exec::BackgroundCompletionPolicy;
  use crate::unified_exec::clamp_yield_time;
-@@ -459,2 +460,3 @@ async fn failed_initial_end_for_unstored_process_uses_fallback_output() {
+@@ -460,2 +461,3 @@ async fn failed_initial_end_for_unstored_process_uses_fallback_output() {
          yield_time_ms: 1000,
 +        background_completion_policy: BackgroundCompletionPolicy::ObserveOnly,
          max_output_tokens: None,
-@@ -628,3 +630,9 @@ async fn pruning_does_not_evict_live_process_while_exited_process_is_finalizing(
+@@ -634,3 +636,9 @@ async fn pruning_does_not_evict_live_process_while_exited_process_is_finalizing(
                  cwd: cwd.clone(),
 -                initial_exec_command_active: Arc::new(AtomicBool::new(false)),
 +                background_completion_delivery: {
@@ -867,10 +879,10 @@ index 297c84fa..ccf9cff8 100644
 +                },
                  hook_command: format!("command-{process_id}"),
 diff --git a/codex-rs/core/tests/suite/mod.rs b/codex-rs/core/tests/suite/mod.rs
-index 2e0e3914..8411cc3e 100644
+index 54e98b75..6208f9aa 100644
 --- a/codex-rs/core/tests/suite/mod.rs
 +++ b/codex-rs/core/tests/suite/mod.rs
-@@ -48,2 +48,3 @@ mod audio_truncation;
+@@ -53,2 +53,3 @@ mod auth_recovery_policy;
  mod auto_review;
 +mod background_completion;
  mod catalog_permission_messages;

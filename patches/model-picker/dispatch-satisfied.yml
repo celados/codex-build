@@ -4,7 +4,7 @@ message: The model picker action dispatches before composer input.
 rule:
   all:
     - pattern: |-
-        pub(crate) fn handle_key_event(&mut self, key_event: KeyEvent) {
+        pub(crate) fn handle_key_event(&mut self, key_event: KeyEvent) -> KeyEventAction {
             $$$BODY
         }
     - has:

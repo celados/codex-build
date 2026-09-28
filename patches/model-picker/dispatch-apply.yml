@@ -7,7 +7,7 @@ rule:
         self.bottom_pane.clear_quit_shortcut_hint();
         self.quit_shortcut_expires_at = None;
         self.quit_shortcut_key = None;
-        return;
+        return KeyEventAction::None;
     }
 fix: |-
   {
@@ -17,7 +17,7 @@ fix: |-
           self.bottom_pane.clear_quit_shortcut_hint();
           self.quit_shortcut_expires_at = None;
           self.quit_shortcut_key = None;
-          return;
+          return KeyEventAction::None;
       }
 
       if key_event.kind == KeyEventKind::Press
@@ -28,6 +28,6 @@ fix: |-
           self.quit_shortcut_expires_at = None;
           self.quit_shortcut_key = None;
           self.open_custom_model_picker();
-          return;
+          return KeyEventAction::None;
       }
   }
