@@ -16,9 +16,6 @@ Silicon macOS with a small, drift-detecting patch set:
 - `Alt+P` opens the custom model-and-effort picker without clearing the composer
   draft; Up/Down selects a model, Left/Right adjusts that row's effort, and Enter
   commits both; every effort declared by the provider remains directly selectable;
-- finite background commands can opt into `on_exit: "resume_turn"`; their exit
-  is queued through Codex's existing session input path and resumes the agent
-  when the thread is idle;
 - the Computer Use MCP server is skipped because custom-signature startup has
   not been proven compatible. Other plugin MCP servers remain enabled.
 

@@ -29,12 +29,6 @@ class Overlay:
     destination: str
 
 
-@dataclass(frozen=True)
-class DiffPatch:
-    name: str
-    source: str
-
-
 OVERLAYS = (
     Overlay(
         "selection accessory module",
@@ -50,29 +44,6 @@ OVERLAYS = (
         "custom model picker module",
         "overlays/codex-rs/tui/src/chatwidget/custom_model_picker.rs",
         "codex-rs/tui/src/chatwidget/custom_model_picker.rs",
-    ),
-    Overlay(
-        "background completion module",
-        "overlays/codex-rs/core/src/session/background_completion.rs",
-        "codex-rs/core/src/session/background_completion.rs",
-    ),
-    Overlay(
-        "background completion unit tests",
-        "overlays/codex-rs/core/src/session/background_completion_tests.rs",
-        "codex-rs/core/src/session/background_completion_tests.rs",
-    ),
-    Overlay(
-        "background completion integration test",
-        "overlays/codex-rs/core/tests/suite/background_completion.rs",
-        "codex-rs/core/tests/suite/background_completion.rs",
-    ),
-)
-
-
-DIFF_PATCHES = (
-    DiffPatch(
-        "background process completion wake-up",
-        "patches/background-completion/core.patch",
     ),
 )
 
@@ -119,20 +90,6 @@ def matches(repo: Path, rule: Path, source: Path) -> int:
     return len(json.loads(result.stdout))
 
 
-def diff_applies(source_root: Path, patch: Path, *, reverse: bool = False) -> bool:
-    command = ["git", "apply", "--check"]
-    if reverse:
-        command.append("--reverse")
-    command.append(str(patch))
-    return subprocess.run(
-        command,
-        cwd=source_root,
-        check=False,
-        capture_output=True,
-        text=True,
-    ).returncode == 0
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, required=True)
@@ -171,34 +128,6 @@ def main() -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
         print(f"applied: {overlay.name}")
-
-    for diff_patch in DIFF_PATCHES:
-        patch = repo / diff_patch.source
-        applicable = diff_applies(source_root, patch)
-        satisfied = diff_applies(source_root, patch, reverse=True)
-
-        if satisfied and not applicable:
-            print(f"satisfied: {diff_patch.name}")
-            continue
-        if applicable == satisfied:
-            raise SystemExit(
-                f"unknown upstream drift for {diff_patch.name}: "
-                f"applicable={applicable}, satisfied={satisfied}"
-            )
-        if args.check:
-            print(f"applicable: {diff_patch.name}")
-            continue
-
-        subprocess.run(
-            ["git", "apply", str(patch)],
-            cwd=source_root,
-            check=True,
-        )
-        if not diff_applies(source_root, patch, reverse=True):
-            raise SystemExit(
-                f"patch did not reach its postcondition: {diff_patch.name}"
-            )
-        print(f"applied: {diff_patch.name}")
 
     for patch in PATCHES:
         apply_rule = repo / patch.apply_rule
