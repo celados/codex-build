@@ -25,10 +25,19 @@ Install or update the latest release with:
 curl -fsSL https://raw.githubusercontent.com/celados/codex-build/main/install.sh | sh
 ```
 
-The installer checks the target binary's version before downloading an
-artifact. Re-running it at the latest version is a no-op. Downloaded artifacts
-use a temporary directory that is removed on exit; the installer does not keep
-a version cache to prune.
+The installer checks the installed version before downloading an artifact and
+validates its checksum. It requires `rg` (ripgrep), which it copies into the local
+package alongside the CLI, code-mode host and package metadata. Versioned packages
+live under `$CODEX_INSTALL_DIR/.codex-build/releases/` (default
+`~/.local/bin/.codex-build/releases/`); the public executables are symlinks.
+
+When a managed daemon is running, the installer selects and pins the new CLI
+package with `codex app-server daemon update --from-cli --yes`. Upstream restarts
+the running daemon during that update. Active or queued work may be interrupted.
+The installer verifies that the CLI, daemon package and running server versions
+match, and fails if synchronization fails. Re-running an installation also repairs
+a stale running daemon without downloading the archive again. A first install
+leaves daemon startup to the next interactive CLI invocation.
 
 ## Picker models
 
@@ -62,10 +71,8 @@ installer writes both. Codex resolves the host from its own directory and the
 two exchange an IPC schema that upstream extends without bumping the protocol
 version, so a host from a different upstream tag fails every tool call before
 it reaches a shell. The CLI embeds no V8, so there is no in-process fallback to
-absorb the mismatch. The installer records the pair's version in
-`.codex-code-mode-host.version` beside the binaries, replaces a host it cannot
-account for, and installs the host before codex so an interrupted run never
-leaves a new codex next to an old host.
+absorb the mismatch. The installer switches the host symlink before the CLI symlink so an interrupted
+run never leaves a new CLI next to an old host.
 
 ## Build policy
 
