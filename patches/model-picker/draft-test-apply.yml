@@ -10,12 +10,12 @@ fix: |-
   async fn model_picker_filters_hidden_models_and_shortcut_preserves_draft() {
       $$$BODY
 
-      let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.4")).await;
+      let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(Some("test-custom-model")).await;
       chat.thread_id = Some(ThreadId::new());
-      let mut preset = get_available_model(&chat, "gpt-5.4");
-      preset.show_in_picker = true;
-      preset.default_reasoning_effort = ReasoningEffortConfig::Medium;
-      preset.supported_reasoning_efforts = vec![
+      let mut custom_preset = preset("test-custom-model", true);
+      custom_preset.show_in_picker = true;
+      custom_preset.default_reasoning_effort = ReasoningEffortConfig::Medium;
+      custom_preset.supported_reasoning_efforts = vec![
           ReasoningEffortPreset {
               effort: ReasoningEffortConfig::Low,
               description: "Low".to_string(),
@@ -33,7 +33,7 @@ fix: |-
               description: "Provider max".to_string(),
           },
       ];
-      chat.model_catalog = std::sync::Arc::new(ModelCatalog::new(vec![preset]));
+      chat.model_catalog = std::sync::Arc::new(ModelCatalog::new(vec![custom_preset]));
       chat.set_reasoning_effort(Some(ReasoningEffortConfig::Medium));
       while rx.try_recv().is_ok() {}
       chat.bottom_pane.set_composer_text(
@@ -53,7 +53,7 @@ fix: |-
 
             Search models
 
-          › gpt-5.4 (current)  low · MEDIUM · high · max
+          › test-custom-model (current)  low · MEDIUM · high · max
 
             enter confirm   ← → effort   esc
           "###
@@ -75,7 +75,7 @@ fix: |-
           AppEvent::PersistModelSelection {
               model,
               effort: Some(ReasoningEffortConfig::Max),
-          } if model == "gpt-5.4"
+          } if model == "test-custom-model"
       )));
       assert_eq!(chat.bottom_pane.composer_text(), "keep this draft");
 
@@ -108,7 +108,7 @@ fix: |-
               (Some("6/unknown"), true, provider_order.clone()),
           ] {
               let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some(current_model)).await;
-              let base = get_available_model(&chat, "gpt-5.4");
+              let base = preset("test-base-model", true);
               let presets = provider_order
                   .iter()
                   .map(|model| {
