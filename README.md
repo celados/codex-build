@@ -51,7 +51,7 @@ CODEX_PICKER_MODELS='6/{sol,astra,luna};5.6/sol' codex
 Groups are separated by `;`. Each group is `<version>/{<codename>,...}`
 (braces optional for one codename) and expands to `gpt-<version>-<codename>`;
 a bare `<version>` such as `5.5` names `gpt-5.5`. The picker shows only the
-listed models, in the written order, and marks the first as default. Listed
+listed models, in the written order, without marking a default. Listed
 models the provider does not currently offer are skipped.
 
 For a persistent preference, export the variable from your shell startup file
@@ -59,9 +59,10 @@ For a persistent preference, export the variable from your shell startup file
 from a new shell. Desktop launchers must receive the variable separately.
 
 This controls only the picker; the `model` configuration still controls the
-startup model, and the current marker takes precedence over the default marker.
+startup model. The picker marks the current model and follows upstream in omitting
+default labels.
 If the variable is unset, malformed (the whole value is then ignored), or
-matches no offered model, the provider's list, order, and default are unchanged.
+matches no offered model, the provider's list and order are unchanged.
 No model name is hardcoded as the fallback.
 
 ## Binary pairing
