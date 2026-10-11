@@ -42,7 +42,7 @@ impl ChatWidget {
     ) {
         // The allowlist is independent of the current session model. Listed models the
         // provider does not offer are skipped; if none remain, the picker would be unusable,
-        // so the provider's list, order, and default stay unchanged instead.
+        // so the provider's list and order stay unchanged instead.
         if let Some(picker_models) = picker_models {
             let chosen: Vec<ModelPreset> = picker_models
                 .iter()
@@ -55,9 +55,6 @@ impl ChatWidget {
                 .collect();
             if !chosen.is_empty() {
                 presets = chosen;
-                for (index, preset) in presets.iter_mut().enumerate() {
-                    preset.is_default = index == 0;
-                }
             }
         }
         let current_model = self.current_model().to_string();
@@ -103,7 +100,6 @@ impl ChatWidget {
                     name: preset.model.clone(),
                     accessory,
                     is_current,
-                    is_default: preset.is_default,
                     actions: actions.unwrap_or_default(),
                     dismiss_on_select: true,
                     search_value: Some(format!("{} {}", preset.model, preset.display_name)),

@@ -129,18 +129,8 @@ fix: |-
               for (row, model) in rows.iter().zip(&expected_order) {
                   assert!(row.contains(model), "{popup}");
               }
-              // The view displays current instead of default when both apply.
-              let expected_marker = if current_model == expected_order[0] {
-                  "(current)"
-              } else {
-                  "(default)"
-              };
-              assert!(rows[0].contains(expected_marker), "{popup}");
-              assert_eq!(
-                  popup.matches("(default)").count(),
-                  usize::from(current_model != expected_order[0]),
-                  "{popup}"
-              );
+              // Upstream no longer labels a default; allowlist order is independent of selection.
+              assert!(!popup.contains("(default)"), "{popup}");
               if let Some(row) = rows.iter().find(|row| row.contains(current_model)) {
                   assert!(row.contains("(current)"), "{popup}");
               }
